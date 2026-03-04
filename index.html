@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EdenMC — Factory Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0d0f0c;
+  --bg2:      #131610;
+  --bg3:      #1a1e17;
+  --border:   #2e3429;
+  --border2:  #3d4437;
+  --gold:     #c9a84c;
+  --gold2:    #e8c97a;
+  --green:    #5a8a3c;
+  --green2:   #7db85a;
+  --red:      #8a3c3c;
+  --red2:     #b85a5a;
+  --cyan:     #3c7a8a;
+  --cyan2:    #5ab8d4;
+  --text:     #c8d4b8;
+  --text2:    #8a9680;
+  --text3:    #5a6450;
+  --white:    #e8edd8;
+  --shadow:   rgba(0,0,0,0.7);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Crimson Pro', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ─── Header ─── */
+header {
+  background: linear-gradient(180deg, #0a0d09 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 32px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.logo {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--gold2);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 24px rgba(201,168,76,0.4);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.logo span { color: var(--green2); }
+
+.search-wrap {
+  flex: 1;
+  min-width: 200px;
+  max-width: 480px;
+  position: relative;
+}
+.search-wrap input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--white);
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  padding: 9px 16px 9px 40px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-wrap input:focus { border-color: var(--gold); }
+.search-wrap input::placeholder { color: var(--text3); }
+.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); font-size: 0.95rem; pointer-events: none;
+}
+
+nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.nav-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 7px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.nav-btn:hover, .nav-btn.active {
+  background: var(--bg3);
+  border-color: var(--gold);
+  color: var(--gold2);
+}
+
+/* ─── Layout ─── */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 24px 64px;
+}
+
+/* ─── Loading / Error ─── */
+#loading {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text2);
+  font-style: italic;
+  font-size: 1.15rem;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#error-box {
+  background: #2a1010;
+  border: 1px solid var(--red2);
+  border-radius: 8px;
+  padding: 24px 28px;
+  margin: 40px auto;
+  max-width: 640px;
+  color: #e8a0a0;
+  font-size: 1.05rem;
+  display: none;
+}
+#error-box strong { color: var(--red2); font-family: 'Cinzel', serif; display: block; margin-bottom: 8px; }
+#error-box code { background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+
+/* ─── Panels ─── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ─── Section title ─── */
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  margin-top: 32px;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* ─── Factory Grid ─── */
+.factory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.factory-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+.factory-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--green) 0%, var(--gold) 100%);
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.factory-card:hover {
+  border-color: var(--border2);
+  background: var(--bg3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px var(--shadow);
+}
+.factory-card:hover::before { opacity: 1; }
+.factory-card.selected {
+  border-color: var(--gold);
+  background: var(--bg3);
+}
+.factory-card.selected::before { opacity: 1; }
+
+.factory-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+.factory-type-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+.badge-FCC { background: rgba(90,138,60,0.2); color: var(--green2); border: 1px solid rgba(90,138,60,0.3); }
+.badge-FCCUPGRADE { background: rgba(90,138,60,0.2); color: #9ee87a; border: 1px solid rgba(90,138,60,0.4); }
+
+.factory-meta {
+  font-size: 0.85rem;
+  color: var(--text2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.factory-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.factory-recipe-count {
+  font-size: 0.8rem;
+  color: var(--text3);
+  margin-top: 8px;
+}
+
+/* ─── Factory Detail ─── */
+.factory-detail {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  display: none;
+}
+.factory-detail.visible { display: block; }
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.detail-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--white);
+}
+.detail-subtitle {
+  color: var(--text2);
+  font-style: italic;
+  margin-top: 4px;
+}
+.close-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-size: 1.3rem;
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.close-btn:hover { border-color: var(--gold); color: var(--gold2); }
+
+.detail-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.stat-chip {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+}
+.stat-chip .label { color: var(--text3); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+.stat-chip .value { color: var(--gold2); font-weight: 600; }
+
+/* ─── Setup Cost ─── */
+.setup-cost-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.item-chip {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+  transition: border-color 0.15s;
+}
+.item-chip:hover { border-color: var(--border2); }
+.item-icon {
+  width: 32px; height: 32px;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.05);
+}
+.item-info .item-name { font-size: 0.88rem; color: var(--white); line-height: 1.2; }
+.item-info .item-amount { font-size: 0.8rem; color: var(--gold); font-weight: 600; }
+.item-info .item-type { font-size: 0.72rem; color: var(--text3); }
+
+/* ─── Recipe List in Factory ─── */
+.recipe-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.recipe-row {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.recipe-row:hover { border-color: var(--gold); background: #1f2419; }
+.recipe-row .rr-name {
+  font-size: 0.9rem;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.recipe-row .rr-type {
+  font-size: 0.72rem;
+  color: var(--text3);
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.04em;
+}
+.recipe-row .rr-io {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--text2);
+}
+.arrow { color: var(--gold); margin: 0 4px; }
+
+/* ─── Recipe Detail Panel ─── */
+#recipe-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 200;
+  padding: 40px 16px;
+  overflow-y: auto;
+  backdrop-filter: blur(3px);
+}
+#recipe-modal.open { display: flex; }
+
+.recipe-modal-inner {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 32px 36px;
+  max-width: 700px;
+  width: 100%;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+  position: relative;
+  animation: modalIn 0.18s ease-out;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: var(--bg3); border: 1px solid var(--border2); color: var(--text2);
+  font-size: 1.2rem; width: 32px; height: 32px;
+  border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.modal-close:hover { border-color: var(--gold2); color: var(--gold2); }
+
+.modal-recipe-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.modal-recipe-meta {
+  font-size: 0.85rem;
+  color: var(--text2);
+  margin-bottom: 20px;
+  display: flex; gap: 16px; flex-wrap: wrap;
+}
+.modal-recipe-meta span { color: var(--text3); }
+.modal-recipe-meta strong { color: var(--gold); }
+
+.io-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 28px;
+}
+.io-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.io-arrow {
+  display: flex; align-items: center; justify-content: center;
+  padding-top: 28px;
+  font-size: 1.8rem;
+  color: var(--gold);
+}
+
+/* ─── Calculator ─── */
+.calc-section {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-top: 20px;
+}
+.calc-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+}
+.calc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.calc-row label { font-size: 0.9rem; color: var(--text2); white-space: nowrap; }
+.calc-input {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  color: var(--white);
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  padding: 7px 12px;
+  width: 110px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.calc-input:focus { border-color: var(--gold); }
+.calc-select {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  color: var(--white);
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  padding: 7px 12px;
+  outline: none;
+  cursor: pointer;
+}
+.calc-btn {
+  background: linear-gradient(135deg, var(--green) 0%, #3d6628 100%);
+  border: 1px solid var(--green2);
+  color: var(--white);
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  padding: 9px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.calc-btn:hover { background: linear-gradient(135deg, #6aaa44 0%, var(--green) 100%); }
+.calc-reset {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  padding: 9px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.calc-reset:hover { border-color: var(--red2); color: var(--red2); }
+
+.calc-results {
+  margin-top: 16px;
+}
+.calc-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.calc-result-row:last-child { border-bottom: none; }
+.calc-result-label { color: var(--text); font-size: 0.92rem; }
+.calc-result-val { color: var(--gold2); font-weight: 600; font-size: 1rem; }
+.calc-result-runs { color: var(--text3); font-size: 0.8rem; }
+
+/* ─── Recipes Browser Panel ─── */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  align-items: center;
+}
+.filter-select {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.95rem;
+  padding: 8px 14px;
+  outline: none;
+  cursor: pointer;
+}
+.filter-select:focus { border-color: var(--gold); }
+.results-count { color: var(--text3); font-size: 0.85rem; font-style: italic; margin-left: auto; }
+
+.recipes-browser {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.recipe-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.recipe-card:hover {
+  border-color: var(--border2);
+  background: var(--bg3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+.recipe-card .rc-name {
+  font-size: 0.95rem;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.recipe-card .rc-factory {
+  font-size: 0.78rem;
+  color: var(--cyan2);
+  margin-bottom: 8px;
+}
+.rc-type-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+.badge-PRODUCTION { background: rgba(90,138,60,0.15); color: var(--green2); border: 1px solid rgba(90,138,60,0.25); }
+.badge-REPAIR { background: rgba(90,60,60,0.2); color: var(--red2); border: 1px solid rgba(138,60,60,0.3); }
+.badge-UPGRADE { background: rgba(201,168,76,0.15); color: var(--gold2); border: 1px solid rgba(201,168,76,0.25); }
+.badge-RANDOM { background: rgba(90,138,180,0.15); color: var(--cyan2); border: 1px solid rgba(90,138,180,0.25); }
+.badge-OTHER { background: rgba(100,100,100,0.15); color: var(--text2); border: 1px solid rgba(100,100,100,0.25); }
+.rc-io {
+  font-size: 0.82rem;
+  color: var(--text2);
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Calculator Panel (standalone) ─── */
+.calc-panel {
+  max-width: 860px;
+}
+.calc-panel .step-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+/* ─── Utilities ─── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+  font-style: italic;
+  font-size: 1.05rem;
+}
+
+.tag-repair { color: var(--red2); }
+.tag-upgrade { color: var(--gold2); }
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  header { padding: 16px; }
+  .container { padding: 16px; }
+  .io-grid { grid-template-columns: 1fr; }
+  .io-arrow { padding-top: 0; transform: rotate(90deg); }
+  .factory-detail { padding: 20px 18px; }
+  .recipe-modal-inner { padding: 20px 18px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">Eden<span>MC</span> <span style="color:var(--text3);font-weight:400;font-size:0.85em">Factories</span></div>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="global-search" placeholder="Search factories, recipes, items…" autocomplete="off">
+    </div>
+    <nav>
+      <button class="nav-btn active" data-panel="factories">Factories</button>
+      <button class="nav-btn" data-panel="recipes">Recipes</button>
+      <button class="nav-btn" data-panel="calculator">Calculator</button>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  <div id="loading">
+    <div class="spinner"></div>
+    Loading configuration…
+  </div>
+
+  <div id="error-box">
+    <strong>⚠ Could not load configuration</strong>
+    Make sure <code>factorymodconfig.yml</code> is in the same directory as this file and you're serving over HTTP (not <code>file://</code>).
+    <br><br>
+    <span id="error-detail"></span>
+  </div>
+
+  <!-- ═══ FACTORIES PANEL ═══ -->
+  <div class="panel" id="panel-factories">
+    <div id="factory-detail-container" class="factory-detail">
+      <div class="detail-header">
+        <div>
+          <div class="detail-title" id="dd-name"></div>
+          <div class="detail-subtitle" id="dd-subtitle"></div>
+        </div>
+        <button class="close-btn" id="detail-close" title="Close">✕</button>
+      </div>
+      <div class="detail-stats" id="dd-stats"></div>
+      <div id="dd-setupcost-section">
+        <div class="section-title">Setup Cost</div>
+        <div class="setup-cost-grid" id="dd-setupcost"></div>
+      </div>
+      <div id="dd-fuel-section">
+        <div class="section-title">Fuel</div>
+        <div class="setup-cost-grid" id="dd-fuel"></div>
+      </div>
+      <hr class="divider">
+      <div class="section-title">Recipes <span id="dd-recipe-count" style="color:var(--text3);font-weight:400;font-size:0.85em"></span></div>
+      <div class="recipe-list" id="dd-recipes"></div>
+    </div>
+
+    <div id="factory-grid-container">
+      <div class="section-title" id="factories-section-label">All Factories</div>
+      <div class="factory-grid" id="factory-grid"></div>
+    </div>
+  </div>
+
+  <!-- ═══ RECIPES PANEL ═══ -->
+  <div class="panel" id="panel-recipes">
+    <div class="filter-bar">
+      <select class="filter-select" id="recipe-factory-filter">
+        <option value="">All Factories</option>
+      </select>
+      <select class="filter-select" id="recipe-type-filter">
+        <option value="">All Types</option>
+        <option value="PRODUCTION">Production</option>
+        <option value="REPAIR">Repair</option>
+        <option value="UPGRADE">Upgrade</option>
+        <option value="RANDOM">Random</option>
+      </select>
+      <span class="results-count" id="recipe-count-label"></span>
+    </div>
+    <div class="recipes-browser" id="recipes-browser"></div>
+  </div>
+
+  <!-- ═══ CALCULATOR PANEL ═══ -->
+  <div class="panel calc-panel" id="panel-calculator">
+    <div class="section-title">Recipe Calculator</div>
+    <div style="color:var(--text2);margin-bottom:24px;font-size:0.95rem;">
+      Calculate how many input items you need to craft a desired quantity of any output.
+    </div>
+
+    <div class="calc-section">
+      <div class="calc-title">⚗ Configure Recipe</div>
+
+      <div class="calc-row">
+        <label>Factory</label>
+        <select class="calc-select" id="calc-factory" style="min-width:220px">
+          <option value="">— Select Factory —</option>
+        </select>
+      </div>
+
+      <div class="calc-row">
+        <label>Recipe</label>
+        <select class="calc-select" id="calc-recipe" style="min-width:280px" disabled>
+          <option value="">— Select Recipe —</option>
+        </select>
+      </div>
+
+      <div id="calc-output-row" class="calc-row" style="display:none">
+        <label>Target Output</label>
+        <select class="calc-select" id="calc-output-item" style="min-width:200px"></select>
+        <input type="number" class="calc-input" id="calc-target-amount" min="1" value="64" placeholder="Amount">
+        <button class="calc-btn" id="calc-go">Calculate</button>
+        <button class="calc-reset" id="calc-reset">Reset</button>
+      </div>
+
+      <div id="calc-results-area" class="calc-results" style="display:none">
+        <div style="font-family:'Cinzel',serif;font-size:0.78rem;color:var(--text3);letter-spacing:0.06em;margin-bottom:12px;text-transform:uppercase">Results</div>
+        <div id="calc-output-rows"></div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-family:'Cinzel',serif;font-size:0.78rem;color:var(--text3);letter-spacing:0.06em;margin-bottom:10px;text-transform:uppercase">Input Materials Needed</div>
+          <div id="calc-input-rows"></div>
+        </div>
+        <div style="margin-top:12px;color:var(--text3);font-size:0.82rem;font-style:italic" id="calc-time-note"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RECIPE MODAL ═══ -->
+<div id="recipe-modal">
+  <div class="recipe-modal-inner">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div class="modal-recipe-name" id="modal-name"></div>
+    <div class="modal-recipe-meta" id="modal-meta"></div>
+    <div class="io-grid" id="modal-io"></div>
+    <div class="calc-section" id="modal-calc-section">
+      <div class="calc-title">⚗ Quick Calculator</div>
+      <div class="calc-row">
+        <label>Output quantity:</label>
+        <input type="number" class="calc-input" id="modal-calc-amount" min="1" value="64">
+        <select class="calc-select" id="modal-calc-output-item"></select>
+        <button class="calc-btn" id="modal-calc-go">Calculate</button>
+        <button class="calc-reset" id="modal-calc-reset">Reset</button>
+      </div>
+      <div id="modal-calc-results" class="calc-results" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// YAML PARSER — Handles Bukkit FactoryMod YAML format
+// ═══════════════════════════════════════════════════════════════
+function parseFactoryConfig(yamlText) {
+  const lines = yamlText.split('\n');
+
+  function getIndent(line) {
+    let i = 0;
+    while (i < line.length && line[i] === ' ') i++;
+    return i;
+  }
+
+  function parseItemStack(block) {
+    const t = block.match(/^\s+type:\s+(\w+)/m);
+    const a = block.match(/^\s+amount:\s+(\d+)/m);
+    const dn = block.match(/^\s+display-name:\s+(.+)/m);
+    const loreMatch = block.match(/^\s+lore:\n((?:\s+- .+\n?)*)/m);
+    let lore = null;
+    if (loreMatch) {
+      lore = loreMatch[1].trim().split('\n').map(l => l.trim().replace(/^- /, ''));
+    }
+    return {
+      type: t ? t[1] : 'UNKNOWN',
+      amount: a ? parseInt(a[1]) : 1,
+      display_name: dn ? dn[1].trim() : null,
+      lore
+    };
+  }
+
+  // Find section start line indices
+  function findSectionLine(keyword) {
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === keyword + ':') return i;
+    }
+    return -1;
+  }
+
+  function getSectionBlock(startLine) {
+    const baseIndent = getIndent(lines[startLine]);
+    let i = startLine + 1;
+    const blockLines = [];
+    while (i < lines.length) {
+      const l = lines[i];
+      if (l.trim() === '' || l.trim().startsWith('#')) { blockLines.push(l); i++; continue; }
+      if (getIndent(l) <= baseIndent) break;
+      blockLines.push(l);
+      i++;
+    }
+    return blockLines.join('\n');
+  }
+
+  function parseTopLevelEntries(sectionLine) {
+    // Returns array of {id, blockText}
+    const entries = [];
+    const baseIndent = getIndent(lines[sectionLine]);
+    let i = sectionLine + 1;
+    while (i < lines.length) {
+      const l = lines[i];
+      if (l.trim() === '' || l.trim().startsWith('#')) { i++; continue; }
+      const ind = getIndent(l);
+      if (ind <= baseIndent) break;
+      if (ind === baseIndent + 2 && l.trim().endsWith(':')) {
+        // This is a top-level entry
+        const id = l.trim().slice(0, -1);
+        const entryLines = [l];
+        i++;
+        while (i < lines.length) {
+          const nl = lines[i];
+          if (nl.trim() === '' || nl.trim().startsWith('#')) { entryLines.push(nl); i++; continue; }
+          if (getIndent(nl) <= baseIndent + 2) break;
+          entryLines.push(nl);
+          i++;
+        }
+        entries.push({ id, block: entryLines.join('\n') });
+        continue;
+      }
+      i++;
+    }
+    return entries;
+  }
+
+  // ── Parse Factories ──
+  const facLine = findSectionLine('factories');
+  const recLine = findSectionLine('recipes');
+  const factories = {};
+  const recipes = {};
+
+  if (facLine >= 0) {
+    const facEntries = parseTopLevelEntries(facLine);
+    for (const { id, block } of facEntries) {
+      const typeM = block.match(/^    type:\s+(\w+)/m);
+      const nameM = block.match(/^    name:\s+(.+)/m);
+      const citM  = block.match(/^    citadelBreakReduction:\s+([\d.]+)/m);
+
+      // Fuel
+      let fuel = null;
+      const fuelM = block.match(/^    fuel:\n((?:      [\s\S]*?)(?=\n    \w|\n  \w|\Z))/m);
+      if (fuelM) {
+        const ft = fuelM[1].match(/type:\s+(\w+)/);
+        const fa = fuelM[1].match(/amount:\s+(\d+)/);
+        const fdn = fuelM[1].match(/display-name:\s+(.+)/);
+        fuel = { type: ft ? ft[1] : null, amount: fa ? parseInt(fa[1]) : 1, display_name: fdn ? fdn[1].trim() : null };
+      }
+
+      // Setup cost
+      const setupcost = {};
+      const scM = block.match(/^    setupcost:\n((?:      [\s\S]*?)(?=\n    \w|\n  \w|\Z))/m);
+      if (scM) {
+        const scText = scM[1];
+        const itemRe = /^      ([\w ]+):\n((?:        .*\n)*)/mg;
+        let im;
+        while ((im = itemRe.exec(scText)) !== null) {
+          setupcost[im[1].trim()] = parseItemStack(im[2]);
+        }
+      }
+
+      // Recipe list
+      const recipeIds = [];
+      const rListM = block.match(/^    recipes:\n((?:      - \w+\n?)*)/m);
+      if (rListM) {
+        const rListRe = /      - (\w+)/g;
+        let rm;
+        while ((rm = rListRe.exec(rListM[1])) !== null) recipeIds.push(rm[1]);
+      }
+
+      factories[id] = {
+        id,
+        name: nameM ? nameM[1].trim() : id,
+        type: typeM ? typeM[1] : 'FCC',
+        citadelBreakReduction: citM ? parseFloat(citM[1]) : null,
+        fuel,
+        setupcost,
+        recipes: recipeIds,
+      };
+    }
+  }
+
+  // ── Parse Recipes ──
+  if (recLine >= 0) {
+    const recEntries = parseTopLevelEntries(recLine);
+    for (const { id, block } of recEntries) {
+      const typeM  = block.match(/^    type:\s+(\w+)/m);
+      const nameM  = block.match(/^    name:\s+(.+)/m);
+      const ptimeM = block.match(/^    production_time:\s+(.+)/m);
+
+      const inputs = {};
+      const inM = block.match(/^    input:\n((?:      [\s\S]*?)(?=\n    \w|\Z))/m);
+      if (inM) {
+        const itemRe = /^      ([\w ]+):\n((?:        .*\n)*)/mg;
+        let im;
+        while ((im = itemRe.exec(inM[1])) !== null) inputs[im[1].trim()] = parseItemStack(im[2]);
+      }
+
+      const outputs = {};
+      const outM = block.match(/^    output:\n((?:      [\s\S]*?)(?=\n    \w|\Z))/m);
+      if (outM) {
+        const itemRe = /^      ([\w ]+):\n((?:        .*\n)*)/mg;
+        let im;
+        while ((im = itemRe.exec(outM[1])) !== null) outputs[im[1].trim()] = parseItemStack(im[2]);
+      }
+
+      recipes[id] = {
+        id,
+        name: nameM ? nameM[1].trim() : id.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),
+        type: typeM ? typeM[1] : 'PRODUCTION',
+        production_time: ptimeM ? ptimeM[1].trim() : null,
+        input: inputs,
+        output: outputs,
+      };
+    }
+  }
+
+  return { factories, recipes };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MATERIAL → EMOJI ICON (Minecraft items)
+// ═══════════════════════════════════════════════════════════════
+const ICONS = {
+  // Ores & Metals
+  IRON_INGOT:'🪨',GOLD_INGOT:'✨',DIAMOND:'💎',EMERALD:'💚',COAL:'⬛',CHARCOAL:'🖤',
+  NETHERITE_INGOT:'🔥',COPPER_INGOT:'🟠',RAW_IRON:'🪨',RAW_GOLD:'✨',RAW_COPPER:'🟠',
+  IRON_ORE:'🪨',GOLD_ORE:'✨',DIAMOND_ORE:'💎',COAL_ORE:'⬛',LAPIS_ORE:'🔵',
+  REDSTONE_ORE:'❤',ANCIENT_DEBRIS:'🌑',NETHER_STAR:'⭐',
+  LAPIS_LAZULI:'🔵',REDSTONE:'❤',AMETHYST_SHARD:'🔮',QUARTZ:'⬜',
+  PRISMARINE_SHARD:'🩵',PRISMARINE_CRYSTALS:'🩵',
+  // Blocks
+  STONE:'🧱',COBBLESTONE:'🧱',DIRT:'🟫',SAND:'🟡',GRAVEL:'⬜',NETHERRACK:'🔴',
+  NETHER_BRICKS:'🔴',OBSIDIAN:'🟣',BLACKSTONE:'⬛',BASALT:'⚫',
+  DEEPSLATE:'🌑',COBBLED_DEEPSLATE:'🌑',MAGMA_BLOCK:'🟠',SOUL_SAND:'🟤',SOUL_SOIL:'🟤',
+  GLASS:'🔲',BRICKS:'🟥',TERRACOTTA:'🟤',CONCRETE:'🔶',
+  OAK_LOG:'🪵',SPRUCE_LOG:'🪵',BIRCH_LOG:'🪵',JUNGLE_LOG:'🪵',ACACIA_LOG:'🪵',
+  DARK_OAK_LOG:'🪵',CHERRY_LOG:'🩷',MANGROVE_LOG:'🪵',CRIMSON_STEM:'🔴',WARPED_STEM:'🟢',
+  CHEST:'📦',BARREL:'🛢',BOOKSHELF:'📚',BEEHIVE:'🍯',
+  // Food & Farming
+  WHEAT:'🌾',CARROT:'🥕',POTATO:'🥔',BEETROOT:'🔴',PUMPKIN:'🎃',MELON:'🍈',
+  COCOA_BEANS:'🟤',SUGAR_CANE:'🎋',BAMBOO:'🎋',
+  BREAD:'🍞',BAKED_POTATO:'🥔',COOKIE:'🍪',PUMPKIN_PIE:'🥧',
+  BEEF:'🥩',PORK:'🥩',CHICKEN:'🍗',MUTTON:'🍖',RABBIT:'🐰',COOKED_BEEF:'🥩',
+  COD:'🐟',SALMON:'🐠',
+  // Mob drops
+  BLAZE_ROD:'🔥',BLAZE_POWDER:'🔥',BONE:'🦴',BONE_MEAL:'⚪',STRING:'🧵',
+  SPIDER_EYE:'👁',SLIME_BALL:'🟢',MAGMA_CREAM:'🟠',GHAST_TEAR:'💧',
+  ENDER_PEARL:'🟢',ENDER_EYE:'🟢',SHULKER_SHELL:'🟣',TOTEM_OF_UNDYING:'🏺',
+  NETHER_QUARTZ:'⬜',GLOWSTONE_DUST:'💛',PRISMARINE:'🩵',
+  // Dyes
+  RED_DYE:'🔴',ORANGE_DYE:'🟠',YELLOW_DYE:'🟡',GREEN_DYE:'🟢',BLUE_DYE:'🔵',
+  PURPLE_DYE:'🟣',CYAN_DYE:'🩵',WHITE_DYE:'⬜',GRAY_DYE:'🩶',
+  LIGHT_GRAY_DYE:'🩶',LIME_DYE:'💚',PINK_DYE:'🩷',MAGENTA_DYE:'🟣',
+  BLACK_DYE:'⬛',BROWN_DYE:'🟤',LIGHT_BLUE_DYE:'🩵',
+  // Wool
+  WHITE_WOOL:'⬜',ORANGE_WOOL:'🟠',RED_WOOL:'🔴',BLUE_WOOL:'🔵',GREEN_WOOL:'🟢',
+  // Tools & Armor
+  IRON_PICKAXE:'⛏',IRON_SWORD:'⚔',IRON_AXE:'🪓',IRON_SHOVEL:'🔨',
+  DIAMOND_PICKAXE:'⛏',DIAMOND_SWORD:'⚔',
+  IRON_HELMET:'🪖',IRON_CHESTPLATE:'🛡',IRON_LEGGINGS:'🩲',IRON_BOOTS:'👢',
+  DIAMOND_HELMET:'💎',DIAMOND_CHESTPLATE:'💎',
+  ANVIL:'🔨',CRAFTING_TABLE:'🪚',FURNACE:'🔥',
+  // Misc
+  PAPER:'📄',BOOK:'📖',WRITABLE_BOOK:'📝',WRITTEN_BOOK:'📗',INK_SAC:'🖤',
+  FEATHER:'🪶',LEATHER:'🟤',
+  GLASS_BOTTLE:'🍶',EXPERIENCE_BOTTLE:'💚',ENDER_CHEST:'📦',CLOCK:'⏰',
+  COMPASS:'🧭',BELL:'🔔',LANTERN:'🏮',SEA_LANTERN:'💡',
+  GOLD_NUGGET:'✨',IRON_NUGGET:'🪩',
+  RAIL:'🛤',POWERED_RAIL:'🛤',DETECTOR_RAIL:'🛤',ACTIVATOR_RAIL:'🛤',
+  MINECART:'🚃',HOPPER:'🪣',DROPPER:'📦',DISPENSER:'📦',
+  PISTON:'🔧',STICKY_PISTON:'🔧',OBSERVER:'👁',
+  REDSTONE_BLOCK:'❤',REDSTONE_LAMP:'💡',REPEATER:'🔁',COMPARATOR:'🔁',
+  TNT:'💥',FLINT_AND_STEEL:'🔥',
+  LAVA_BUCKET:'🌋',WATER_BUCKET:'💧',MILK_BUCKET:'🥛',
+  SADDLE:'🐴',NAME_TAG:'🏷',LEAD:'🔗',
+  MAP:'🗺',FILLED_MAP:'🗺',
+  DIAMOND_BLOCK:'💎',IRON_BLOCK:'🪨',GOLD_BLOCK:'✨',COAL_BLOCK:'⬛',
+  EMERALD_BLOCK:'💚',REDSTONE_BLOCK:'❤',LAPIS_BLOCK:'🔵',
+  NETHER_QUARTZ_ORE:'⬜',NETHER_GOLD_ORE:'✨',
+  SCAFFOLDING:'🪜',LADDER:'🪜',
+  KELP:'🌿',DRIED_KELP:'🟫',CACTUS:'🌵',
+  POISONOUS_POTATO:'🥔',APPLE:'🍎',GOLDEN_APPLE:'🍎',
+  PRISMARINE_BRICK:'🩵',DARK_PRISMARINE:'🩵',
+  PURPUR_BLOCK:'🟣',END_STONE:'⬜',END_ROD:'💡',
+  ICE:'🧊',PACKED_ICE:'🧊',BLUE_ICE:'🧊',SNOW_BLOCK:'⬜',
+  FLOWER_POT:'🪴',DECORATED_POT:'🪴',
+  MUSIC_DISC_5:'💿',MUSIC_DISC_11:'💿',MUSIC_DISC_STAL:'💿',
+  MUSIC_DISC_STRAD:'💿',MUSIC_DISC_RELIC:'💿',MUSIC_DISC_MELLOHI:'💿',
+  MUSIC_DISC_CHIRP:'💿',MUSIC_DISC_FAR:'💿',MUSIC_DISC_MALL:'💿',
+  MUSIC_DISC_PIGSTEP:'💿',
+  TURTLE_HELMET:'🐢',SCUTE:'🐢',HEART_OF_THE_SEA:'💙',
+  CRYING_OBSIDIAN:'🟣',RESPAWN_ANCHOR:'⚓',
+  LODESTONE:'🧲',SPYGLASS:'🔭',LIGHTNING_ROD:'⚡',
+  TINTED_GLASS:'🔲',AMETHYST_BLOCK:'🔮',BUDDING_AMETHYST:'🔮',
+  MUD:'🟤',PACKED_MUD:'🟤',MUD_BRICKS:'🟤',
+  MANGROVE_ROOTS:'🪵',FROGLIGHT:'💡',
+  TRIAL_KEY:'🔑',VAULT:'🏛',HEAVY_CORE:'⚙',MACE:'🔨',
+  WIND_CHARGE:'💨',BREEZE_ROD:'💨',
+  ARMADILLO_SCUTE:'🛡',WOLF_ARMOR:'🐺',
+};
+
+function getIcon(type) {
+  return ICONS[type] || '📦';
+}
+
+function itemDisplayName(item) {
+  if (item.display_name) return item.display_name;
+  return item.type.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function formatTime(timeStr) {
+  if (!timeStr) return null;
+  const m = timeStr.match(/^(\d+)([smh])$/);
+  if (!m) return timeStr;
+  const val = parseInt(m[1]);
+  const unit = m[2];
+  if (unit === 's') return val === 1 ? '1 second' : `${val} seconds`;
+  if (unit === 'm') return val === 1 ? '1 minute' : `${val} minutes`;
+  if (unit === 'h') return val === 1 ? '1 hour' : `${val} hours`;
+  return timeStr;
+}
+
+function parseTimeToSeconds(timeStr) {
+  if (!timeStr) return 0;
+  const m = timeStr.match(/^(\d+)([smh])$/);
+  if (!m) return 0;
+  const val = parseInt(m[1]);
+  const unit = m[2];
+  if (unit === 's') return val;
+  if (unit === 'm') return val * 60;
+  if (unit === 'h') return val * 3600;
+  return 0;
+}
+
+function formatSeconds(secs) {
+  if (secs < 60) return `${secs}s`;
+  if (secs < 3600) return `${Math.floor(secs/60)}m ${secs%60}s`;
+  const h = Math.floor(secs/3600);
+  const m = Math.floor((secs%3600)/60);
+  return `${h}h ${m}m`;
+}
+
+function recipeTypeClass(type) {
+  if (!type) return 'OTHER';
+  if (['REPAIR','FCCREPAIR'].includes(type)) return 'REPAIR';
+  if (['UPGRADE','FCCUPGRADE'].includes(type)) return 'UPGRADE';
+  if (type === 'RANDOM') return 'RANDOM';
+  if (type === 'PRODUCTION') return 'PRODUCTION';
+  return 'OTHER';
+}
+
+function recipeTypeName(type) {
+  if (!type) return 'Other';
+  const m = { PRODUCTION:'Production', REPAIR:'Repair', UPGRADE:'Upgrade',
+    RANDOM:'Random', PRINTINGPLATE:'Printing', PRINTBOOK:'Print', WORDBANK:'Wordbank',
+    PRINTNOTE:'Print Note', FCCUPGRADE:'Upgrade' };
+  return m[type] || type;
+}
+
+function renderItemChip(item) {
+  const name = itemDisplayName(item);
+  const icon = getIcon(item.type);
+  return `<div class="item-chip">
+    <div class="item-icon">${icon}</div>
+    <div class="item-info">
+      <div class="item-name">${esc(name)}</div>
+      <div class="item-amount">×${item.amount.toLocaleString()}</div>
+      ${item.display_name ? `<div class="item-type">${esc(item.type)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════════════════════════
+let CONFIG = null;  // { factories, recipes }
+let currentPanel = 'factories';
+let selectedFactory = null;
+let currentModal = null;  // recipe id
+
+// Map recipe id → factory name
+let recipeToFactory = {};
+
+// ═══════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════
+async function loadConfig() {
+  try {
+    const resp = await fetch('factorymodconfig.yml');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
+    const text = await resp.text();
+    CONFIG = parseFactoryConfig(text);
+    document.getElementById('loading').style.display = 'none';
+    buildRecipeToFactory();
+    initApp();
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    const box = document.getElementById('error-box');
+    box.style.display = 'block';
+    document.getElementById('error-detail').textContent = err.message;
+  }
+}
+
+function buildRecipeToFactory() {
+  recipeToFactory = {};
+  for (const [fid, fac] of Object.entries(CONFIG.factories)) {
+    for (const rid of fac.recipes) {
+      if (!recipeToFactory[rid]) recipeToFactory[rid] = [];
+      recipeToFactory[rid].push(fac.name);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showPanel(name) {
+  currentPanel = name;
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelector(`.nav-btn[data-panel="${name}"]`).classList.add('active');
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => showPanel(btn.dataset.panel));
+});
+
+// ═══════════════════════════════════════════════════════════════
+// FACTORIES PANEL
+// ═══════════════════════════════════════════════════════════════
+function renderFactoryGrid(filter = '') {
+  const grid = document.getElementById('factory-grid');
+  const fl = filter.toLowerCase();
+  const facs = Object.values(CONFIG.factories).filter(f =>
+    !fl ||
+    f.name.toLowerCase().includes(fl) ||
+    f.id.includes(fl) ||
+    f.recipes.some(r => {
+      const rec = CONFIG.recipes[r];
+      return rec && rec.name.toLowerCase().includes(fl);
+    })
+  );
+
+  document.getElementById('factories-section-label').textContent =
+    filter ? `Results — ${facs.length} factories` : 'All Factories';
+
+  grid.innerHTML = facs.length === 0
+    ? '<div class="empty-state">No factories match your search.</div>'
+    : facs.map(f => {
+        const sc = Object.values(f.setupcost);
+        const scPreview = sc.slice(0,3).map(i => `${getIcon(i.type)}×${i.amount}`).join(' ');
+        return `<div class="factory-card${selectedFactory===f.id?' selected':''}" data-fid="${f.id}">
+          <div class="factory-name">${esc(f.name)}</div>
+          <span class="factory-type-badge badge-${f.type}">${f.type}</span>
+          ${scPreview ? `<div class="factory-meta" title="Setup cost preview">${esc(scPreview)}</div>` : ''}
+          <div class="factory-recipe-count">${f.recipes.length} recipe${f.recipes.length!==1?'s':''}</div>
+        </div>`;
+      }).join('');
+
+  grid.querySelectorAll('.factory-card').forEach(card => {
+    card.addEventListener('click', () => openFactoryDetail(card.dataset.fid));
+  });
+}
+
+function openFactoryDetail(fid) {
+  selectedFactory = fid;
+  const f = CONFIG.factories[fid];
+  if (!f) return;
+
+  // Update cards
+  document.querySelectorAll('.factory-card').forEach(c =>
+    c.classList.toggle('selected', c.dataset.fid === fid)
+  );
+
+  // Populate detail
+  document.getElementById('dd-name').textContent = f.name;
+  document.getElementById('dd-subtitle').textContent = `Factory ID: ${f.id}`;
+
+  // Stats
+  const stats = document.getElementById('dd-stats');
+  const chips = [];
+  chips.push(`<div class="stat-chip"><div class="label">Type</div><div class="value">${f.type}</div></div>`);
+  if (f.citadelBreakReduction != null) {
+    chips.push(`<div class="stat-chip"><div class="label">Citadel Hardness</div><div class="value">${f.citadelBreakReduction}×</div></div>`);
+  }
+  chips.push(`<div class="stat-chip"><div class="label">Recipes</div><div class="value">${f.recipes.length}</div></div>`);
+  const scCount = Object.keys(f.setupcost).length;
+  if (scCount) chips.push(`<div class="stat-chip"><div class="label">Setup Items</div><div class="value">${scCount} types</div></div>`);
+  stats.innerHTML = chips.join('');
+
+  // Setup cost
+  const scSection = document.getElementById('dd-setupcost-section');
+  const scGrid = document.getElementById('dd-setupcost');
+  const scEntries = Object.entries(f.setupcost);
+  if (scEntries.length) {
+    scSection.style.display = '';
+    scGrid.innerHTML = scEntries.map(([, item]) => renderItemChip(item)).join('');
+  } else {
+    scSection.style.display = 'none';
+  }
+
+  // Fuel
+  const fuelSection = document.getElementById('dd-fuel-section');
+  const fuelGrid = document.getElementById('dd-fuel');
+  if (f.fuel && f.fuel.type) {
+    fuelSection.style.display = '';
+    fuelGrid.innerHTML = renderItemChip(f.fuel);
+  } else {
+    fuelSection.style.display = 'none';
+  }
+
+  // Recipe count
+  document.getElementById('dd-recipe-count').textContent = `(${f.recipes.length})`;
+
+  // Recipe list
+  const recipeListEl = document.getElementById('dd-recipes');
+  recipeListEl.innerHTML = f.recipes.map(rid => {
+    const rec = CONFIG.recipes[rid];
+    if (!rec) return `<div class="recipe-row" style="opacity:0.4">${esc(rid)}</div>`;
+    const inputs = Object.values(rec.input);
+    const outputs = Object.values(rec.output);
+    const inStr = inputs.slice(0,2).map(i => `${getIcon(i.type)} ${itemDisplayName(i)}`).join(', ') + (inputs.length>2?'…':'');
+    const outStr = outputs.slice(0,1).map(i => `${getIcon(i.type)} ${itemDisplayName(i)}`).join(', ');
+    const tc = recipeTypeClass(rec.type);
+    const isRepair = tc === 'REPAIR';
+    return `<div class="recipe-row${isRepair?' tag-repair':''}" data-rid="${rid}">
+      <div class="rr-name">${esc(rec.name)}</div>
+      <div class="rr-type">${recipeTypeName(rec.type)}${rec.production_time ? ' · ' + formatTime(rec.production_time) : ''}</div>
+      ${(inStr || outStr) ? `<div class="rr-io">${inStr ? esc(inStr) : '?'}${outStr ? '<span class="arrow">→</span>' + esc(outStr) : ''}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  recipeListEl.querySelectorAll('.recipe-row[data-rid]').forEach(row => {
+    row.addEventListener('click', () => openRecipeModal(row.dataset.rid));
+  });
+
+  // Show detail, scroll to it
+  const container = document.getElementById('factory-detail-container');
+  container.classList.add('visible');
+  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('detail-close').addEventListener('click', () => {
+  document.getElementById('factory-detail-container').classList.remove('visible');
+  document.querySelectorAll('.factory-card').forEach(c => c.classList.remove('selected'));
+  selectedFactory = null;
+});
+
+// ═══════════════════════════════════════════════════════════════
+// RECIPES PANEL
+// ═══════════════════════════════════════════════════════════════
+function initRecipesPanel() {
+  const factoryFilter = document.getElementById('recipe-factory-filter');
+  factoryFilter.innerHTML = '<option value="">All Factories</option>' +
+    Object.values(CONFIG.factories)
+      .sort((a,b) => a.name.localeCompare(b.name))
+      .map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+
+  factoryFilter.addEventListener('change', renderRecipesBrowser);
+  document.getElementById('recipe-type-filter').addEventListener('change', renderRecipesBrowser);
+  renderRecipesBrowser();
+}
+
+function renderRecipesBrowser(searchFilter = '') {
+  const fFilter = document.getElementById('recipe-factory-filter').value;
+  const tFilter = document.getElementById('recipe-type-filter').value;
+  const fl = (searchFilter || document.getElementById('global-search').value).toLowerCase();
+
+  let recipeIds = fFilter
+    ? CONFIG.factories[fFilter]?.recipes || []
+    : Object.keys(CONFIG.recipes);
+
+  let filtered = recipeIds
+    .map(id => CONFIG.recipes[id])
+    .filter(Boolean)
+    .filter(r => !tFilter || recipeTypeClass(r.type) === tFilter)
+    .filter(r => {
+      if (!fl) return true;
+      if (r.name.toLowerCase().includes(fl)) return true;
+      if (r.id.includes(fl)) return true;
+      const allItems = [...Object.values(r.input), ...Object.values(r.output)];
+      return allItems.some(i =>
+        itemDisplayName(i).toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl)
+      );
+    });
+
+  document.getElementById('recipe-count-label').textContent = `${filtered.length} recipe${filtered.length!==1?'s':''}`;
+
+  const browser = document.getElementById('recipes-browser');
+  if (filtered.length === 0) {
+    browser.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No recipes match your filters.</div>';
+    return;
+  }
+
+  browser.innerHTML = filtered.map(r => {
+    const factories = recipeToFactory[r.id] || [];
+    const inputs = Object.values(r.input);
+    const outputs = Object.values(r.output);
+    const inStr = inputs.slice(0,2).map(i => `${getIcon(i.type)} ${itemDisplayName(i)}`).join(', ') + (inputs.length>2?` +${inputs.length-2}`:' ');
+    const outStr = outputs.slice(0,1).map(i => `${getIcon(i.type)} ${itemDisplayName(i)} ×${i.amount}`).join('');
+    const tc = recipeTypeClass(r.type);
+    return `<div class="recipe-card" data-rid="${r.id}">
+      <span class="rc-type-badge badge-${tc}">${recipeTypeName(r.type)}</span>
+      <div class="rc-name">${esc(r.name)}</div>
+      ${factories.length ? `<div class="rc-factory">🏭 ${esc(factories.join(', '))}</div>` : ''}
+      ${(inStr || outStr) ? `<div class="rc-io">${inStr ? esc(inStr) : ''}${outStr ? '<span class="arrow">→</span>' + esc(outStr) : ''}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  browser.querySelectorAll('.recipe-card[data-rid]').forEach(card => {
+    card.addEventListener('click', () => openRecipeModal(card.dataset.rid));
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RECIPE MODAL
+// ═══════════════════════════════════════════════════════════════
+function openRecipeModal(rid) {
+  const r = CONFIG.recipes[rid];
+  if (!r) return;
+  currentModal = rid;
+
+  document.getElementById('modal-name').textContent = r.name;
+
+  // Meta
+  const factories = recipeToFactory[rid] || [];
+  let metaHtml = `<span>Type: <strong>${recipeTypeName(r.type)}</strong></span>`;
+  if (r.production_time) metaHtml += `<span>Time: <strong>${formatTime(r.production_time)}</strong></span>`;
+  if (factories.length) metaHtml += `<span>Factory: <strong>${esc(factories.join(', '))}</strong></span>`;
+  document.getElementById('modal-meta').innerHTML = metaHtml;
+
+  // IO grid
+  const inputs = Object.values(r.input);
+  const outputs = Object.values(r.output);
+  const ioEl = document.getElementById('modal-io');
+
+  const inHtml = inputs.length
+    ? `<div><div class="io-label">Inputs</div><div class="setup-cost-grid">${inputs.map(i => renderItemChip(i)).join('')}</div></div>`
+    : '<div><div class="io-label">Inputs</div><div style="color:var(--text3);font-style:italic;font-size:0.9rem">None</div></div>';
+
+  const outHtml = outputs.length
+    ? `<div><div class="io-label">Output</div><div class="setup-cost-grid">${outputs.map(i => renderItemChip(i)).join('')}</div></div>`
+    : '<div><div class="io-label">Output</div><div style="color:var(--text3);font-style:italic;font-size:0.9rem">None</div></div>';
+
+  ioEl.innerHTML = inputs.length || outputs.length
+    ? `${inHtml}<div class="io-arrow">→</div>${outHtml}`
+    : '<div style="color:var(--text3);font-style:italic">No I/O data</div>';
+  ioEl.style.gridTemplateColumns = (inputs.length || outputs.length) ? '1fr auto 1fr' : '1fr';
+
+  // Quick calc output items
+  const calcOutputSel = document.getElementById('modal-calc-output-item');
+  calcOutputSel.innerHTML = outputs.map(i =>
+    `<option value="${i.type}" data-amount="${i.amount}">${itemDisplayName(i)} (base ×${i.amount})</option>`
+  ).join('');
+
+  // Show/hide calc
+  const calcSection = document.getElementById('modal-calc-section');
+  calcSection.style.display = (inputs.length && outputs.length) ? '' : 'none';
+
+  // Reset calc
+  document.getElementById('modal-calc-amount').value = 64;
+  document.getElementById('modal-calc-results').style.display = 'none';
+  document.getElementById('modal-calc-results').innerHTML = '';
+
+  document.getElementById('recipe-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRecipeModal() {
+  document.getElementById('recipe-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  currentModal = null;
+}
+
+document.getElementById('modal-close').addEventListener('click', closeRecipeModal);
+document.getElementById('recipe-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('recipe-modal')) closeRecipeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRecipeModal(); });
+
+// ─── Modal quick calc ───
+document.getElementById('modal-calc-go').addEventListener('click', () => {
+  const rid = currentModal;
+  if (!rid) return;
+  const r = CONFIG.recipes[rid];
+  const targetAmount = parseInt(document.getElementById('modal-calc-amount').value) || 64;
+  const outputSel = document.getElementById('modal-calc-output-item');
+  const selectedOutputType = outputSel.value;
+  const baseOutputAmount = parseInt(outputSel.selectedOptions[0]?.dataset.amount) || 1;
+
+  const runs = Math.ceil(targetAmount / baseOutputAmount);
+  const resultsEl = document.getElementById('modal-calc-results');
+
+  let html = `<div class="calc-result-row">
+    <span class="calc-result-label">Runs required</span>
+    <span class="calc-result-val">${runs.toLocaleString()}</span>
+  </div>`;
+
+  const inputs = Object.values(r.input);
+  if (inputs.length) {
+    html += inputs.map(item => `<div class="calc-result-row">
+      <span class="calc-result-label">${getIcon(item.type)} ${esc(itemDisplayName(item))}</span>
+      <span><span class="calc-result-val">${(item.amount * runs).toLocaleString()}</span> <span class="calc-result-runs">(${item.amount}×${runs})</span></span>
+    </div>`).join('');
+  }
+
+  if (r.production_time) {
+    const secs = parseTimeToSeconds(r.production_time) * runs;
+    html += `<div style="margin-top:12px;color:var(--text3);font-size:0.82rem;font-style:italic">
+      ⏱ Total production time: ~${formatSeconds(secs)}
+    </div>`;
+  }
+
+  resultsEl.innerHTML = html;
+  resultsEl.style.display = '';
+});
+
+document.getElementById('modal-calc-reset').addEventListener('click', () => {
+  document.getElementById('modal-calc-amount').value = 64;
+  document.getElementById('modal-calc-results').style.display = 'none';
+  document.getElementById('modal-calc-results').innerHTML = '';
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CALCULATOR PANEL
+// ═══════════════════════════════════════════════════════════════
+function initCalcPanel() {
+  const facSel = document.getElementById('calc-factory');
+  facSel.innerHTML = '<option value="">— Select Factory —</option>' +
+    Object.values(CONFIG.factories)
+      .sort((a,b) => a.name.localeCompare(b.name))
+      .map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+
+  facSel.addEventListener('change', () => {
+    const fid = facSel.value;
+    const recSel = document.getElementById('calc-recipe');
+    const outputRow = document.getElementById('calc-output-row');
+    const resultsArea = document.getElementById('calc-results-area');
+    resultsArea.style.display = 'none';
+    outputRow.style.display = 'none';
+
+    if (!fid) { recSel.innerHTML = '<option value="">— Select Recipe —</option>'; recSel.disabled = true; return; }
+    const fac = CONFIG.factories[fid];
+    recSel.disabled = false;
+    recSel.innerHTML = '<option value="">— Select Recipe —</option>' +
+      fac.recipes
+        .filter(rid => CONFIG.recipes[rid])
+        .map(rid => {
+          const r = CONFIG.recipes[rid];
+          return `<option value="${rid}">${esc(r.name)}</option>`;
+        }).join('');
+  });
+
+  document.getElementById('calc-recipe').addEventListener('change', () => {
+    const rid = document.getElementById('calc-recipe').value;
+    const outputRow = document.getElementById('calc-output-row');
+    const resultsArea = document.getElementById('calc-results-area');
+    resultsArea.style.display = 'none';
+    if (!rid) { outputRow.style.display = 'none'; return; }
+    const r = CONFIG.recipes[rid];
+    const outputs = Object.values(r.output);
+    if (!outputs.length) { outputRow.style.display = 'none'; return; }
+
+    const outSel = document.getElementById('calc-output-item');
+    outSel.innerHTML = outputs.map(i =>
+      `<option value="${i.type}" data-amount="${i.amount}">${itemDisplayName(i)} (base ×${i.amount})</option>`
+    ).join('');
+    outputRow.style.display = 'flex';
+  });
+
+  document.getElementById('calc-go').addEventListener('click', runCalc);
+  document.getElementById('calc-reset').addEventListener('click', resetCalc);
+}
+
+function runCalc() {
+  const rid = document.getElementById('calc-recipe').value;
+  if (!rid) return;
+  const r = CONFIG.recipes[rid];
+  const targetAmount = parseInt(document.getElementById('calc-target-amount').value) || 64;
+  const outSel = document.getElementById('calc-output-item');
+  const baseAmount = parseInt(outSel.selectedOptions[0]?.dataset.amount) || 1;
+  const runs = Math.ceil(targetAmount / baseAmount);
+
+  const outRows = document.getElementById('calc-output-rows');
+  const inRows = document.getElementById('calc-input-rows');
+  const timeNote = document.getElementById('calc-time-note');
+
+  outRows.innerHTML = `<div class="calc-result-row">
+    <span class="calc-result-label">Runs required</span>
+    <span class="calc-result-val">${runs.toLocaleString()}</span>
+  </div>` +
+  Object.values(r.output).map(item => `<div class="calc-result-row">
+    <span class="calc-result-label">${getIcon(item.type)} ${esc(itemDisplayName(item))}</span>
+    <span><span class="calc-result-val">${(item.amount * runs).toLocaleString()}</span> <span class="calc-result-runs">(base ×${item.amount})</span></span>
+  </div>`).join('');
+
+  const inputs = Object.values(r.input);
+  inRows.innerHTML = inputs.length
+    ? inputs.map(item => `<div class="calc-result-row">
+        <span class="calc-result-label">${getIcon(item.type)} ${esc(itemDisplayName(item))}</span>
+        <span><span class="calc-result-val">${(item.amount * runs).toLocaleString()}</span> <span class="calc-result-runs">(${item.amount.toLocaleString()} × ${runs})</span></span>
+      </div>`).join('')
+    : '<div style="color:var(--text3);font-style:italic;font-size:0.9rem;padding:8px 0">No inputs required.</div>';
+
+  if (r.production_time) {
+    const secs = parseTimeToSeconds(r.production_time) * runs;
+    timeNote.textContent = `⏱ Total production time: ~${formatSeconds(secs)} (${runs} runs × ${formatTime(r.production_time)})`;
+  } else {
+    timeNote.textContent = '';
+  }
+
+  document.getElementById('calc-results-area').style.display = '';
+}
+
+function resetCalc() {
+  document.getElementById('calc-factory').value = '';
+  const recSel = document.getElementById('calc-recipe');
+  recSel.innerHTML = '<option value="">— Select Recipe —</option>';
+  recSel.disabled = true;
+  document.getElementById('calc-output-row').style.display = 'none';
+  document.getElementById('calc-results-area').style.display = 'none';
+  document.getElementById('calc-target-amount').value = 64;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GLOBAL SEARCH
+// ═══════════════════════════════════════════════════════════════
+let searchTimeout;
+document.getElementById('global-search').addEventListener('input', e => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    const q = e.target.value;
+    if (currentPanel === 'factories') renderFactoryGrid(q);
+    else if (currentPanel === 'recipes') renderRecipesBrowser(q);
+  }, 150);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+function initApp() {
+  renderFactoryGrid();
+  initRecipesPanel();
+  initCalcPanel();
+  showPanel('factories');
+}
+
+loadConfig();
+</script>
+</body>
+</html>
