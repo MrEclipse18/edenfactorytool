@@ -486,7 +486,6 @@ const WIKI_BASE = 'https://minecraft.wiki/images/Invicon_';
 const WIKI_OVR = {
   PORKCHOP:'Raw_Porkchop',BEEF:'Raw_Beef',CHICKEN:'Raw_Chicken',MUTTON:'Raw_Mutton',
   COD:'Raw_Cod',SALMON:'Raw_Salmon',RABBIT:'Raw_Rabbit',
-  NETHER_STAR:'Nether_Star',EXPERIENCE_BOTTLE:"Bottle_o%27_Enchanting",
   ENDER_EYE:'Eye_of_Ender',LAPIS_LAZULI:'Lapis_Lazuli',SLIME_BALL:'Slimeball',
   CLAY_BALL:'Clay_Ball',COCOA_BEANS:'Cocoa_Beans',BONE_MEAL:'Bone_Meal',
   NETHER_WART:'Nether_Wart',SPIDER_EYE:'Spider_Eye',
@@ -542,15 +541,25 @@ const WIKI_OVR = {
   SMOOTH_RED_SANDSTONE:'Smooth_Red_Sandstone',
   MUSIC_DISC_CREATOR_MUSIC_BOX:'Music_Disc_Creator_Music_Box',
   DRIED_GHAST:'Dried_Ghast',
+  // Animated items — wiki serves these as .gif not .png
+  CLOCK:'Clock',COMPASS:'Compass',NETHER_STAR:'Nether_Star',
+  EXPERIENCE_BOTTLE:'Bottle_o%27_Enchanting',
+  // Custom/unknown items have no wiki icon
+  UNKNOWN:null,
 };
 const FB = {IRON_INGOT:'🪨',GOLD_INGOT:'✨',DIAMOND:'💎',EMERALD:'💚',COAL:'⬛',
   CHARCOAL:'🖤',NETHERITE_INGOT:'🔥',COPPER_INGOT:'🟠',EXPERIENCE_BOTTLE:'💚',
   ENDER_EYE:'🟢',NETHER_STAR:'⭐',BLAZE_ROD:'🔥',OBSIDIAN:'🟣',
   NETHERRACK:'🔴',STONE:'🧱',IRON_PICKAXE:'⛏',CHEST:'📦',OAK_LOG:'🪵',WHEAT:'🌾'};
 
+// Items the wiki serves as animated .gif instead of .png
+const WIKI_GIF = new Set(['CLOCK','COMPASS','NETHER_STAR','EXPERIENCE_BOTTLE']);
+
 function wikiUrl(t){
+  if(WIKI_OVR[t]===null) return null; // no icon available
   const n=WIKI_OVR[t]||t.split('_').map(w=>w[0].toUpperCase()+w.slice(1).toLowerCase()).join('_');
-  return WIKI_BASE+n+'.png';
+  const ext=WIKI_GIF.has(t)?'.gif':'.png';
+  return WIKI_BASE+n+ext;
 }
 // Broken icon tracker — run window.brokenIcons() in browser console to see all failures
 const _brokenIconSet = new Set();
@@ -563,8 +572,15 @@ window.brokenIcons = () => {
 };
 
 function mkImg(t,sz=40){
+  const url=wikiUrl(t);
+  if(!url){
+    // No wiki icon — render fallback immediately, no broken-icon noise
+    const s=document.createElement('span');
+    s.style.cssText=`display:inline-flex;align-items:center;justify-content:center;width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.65)}px;background:rgba(155,89,182,0.1);border-radius:4px;`;
+    s.textContent=FB[t]||'❓';return s;
+  }
   const img=document.createElement('img');
-  img.width=sz;img.height=sz;img.style.imageRendering='pixelated';img.alt=t;img.src=wikiUrl(t);
+  img.width=sz;img.height=sz;img.style.imageRendering='pixelated';img.alt=t;img.src=url;
   img.onerror=()=>{
     _brokenIconSet.add(t);
     const s=document.createElement('span');
