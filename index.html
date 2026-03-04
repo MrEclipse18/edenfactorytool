@@ -528,13 +528,6 @@ nav{display:flex;gap:4px;flex-wrap:wrap}
       <div class="recipes-sidebar">
         <div class="recipes-filter-bar">
           <select class="calc-select" id="recipe-factory-filter" style="width:100%"><option value="">All Factories</option></select>
-          <select class="calc-select" id="recipe-type-filter" style="width:100%">
-            <option value="">All Types</option>
-            <option value="PRODUCTION">Production</option>
-            <option value="REPAIR">Repair</option>
-            <option value="UPGRADE">Upgrade</option>
-            <option value="RANDOM">Random</option>
-          </select>
           <span class="results-count" id="recipe-count-label"></span>
         </div>
         <div class="recipes-list" id="recipes-list"></div>
@@ -714,7 +707,7 @@ function mkImg(t,sz=40){
 function parseConfig(yaml){
   const lines=yaml.split('\n');
   function ind(l){let i=0;while(i<l.length&&l[i]===' ')i++;return i}
-  function findSec(kw){for(let i=0;i<lines.length;i++)if(lines[i].trim()===kw+':')return i;return -1}
+  function findSec(kw){for(let i=0;i<lines.length;i++)if(lines[i]===kw+':')return i;return -1}
   function parseIS(b){
     const t=b.match(/^\s+type:\s+(\w+)/m),a=b.match(/^\s+amount:\s+(\d+)/m),dn=b.match(/^\s+display-name:\s+(.+)/m);
     return{type:t?t[1]:'UNKNOWN',amount:a?parseInt(a[1]):1,display_name:dn?dn[1].trim():null};
@@ -902,17 +895,14 @@ function initRecipes(){
     Object.values(CFG.factories).sort((a,b)=>a.name.localeCompare(b.name))
       .map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('');
   ff.addEventListener('change',()=>renderRecipeList());
-  document.getElementById('recipe-type-filter').addEventListener('change',()=>renderRecipeList());
   renderRecipeList();
 }
 
 function renderRecipeList(sf=''){
   const ff=document.getElementById('recipe-factory-filter').value;
-  const tf=document.getElementById('recipe-type-filter').value;
   const fl=(sf||document.getElementById('global-search').value).toLowerCase();
   let ids=ff?(CFG.factories[ff]?.recipes||[]):Object.keys(CFG.recipes);
   let filtered=ids.map(id=>CFG.recipes[id]).filter(Boolean)
-    .filter(r=>!tf||tc(r.type)===tf)
     .filter(r=>{if(!fl)return true;
       if(r.name.toLowerCase().includes(fl)||r.id.includes(fl))return true;
       return[...Object.values(r.input),...Object.values(r.output)].some(i=>idn(i).toLowerCase().includes(fl)||i.type.toLowerCase().includes(fl));
