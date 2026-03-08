@@ -33,8 +33,16 @@ function parseItemStack(obj: any): ConfigItem {
 
     type = obj.type || 'UNKNOWN';
     amount = obj.amount || 1;
-    if (obj.meta && obj.meta['display-name']) {
-      display_name = obj.meta['display-name'];
+    if (obj.meta) {
+      if (obj.meta['display-name']) {
+        display_name = obj.meta['display-name'];
+      }
+      if (obj.meta.lore) {
+        const lore = Array.isArray(obj.meta.lore) ? obj.meta.lore : [obj.meta.lore];
+        if (lore.some((line: string) => line.includes('Compacted Item'))) {
+          return { type, amount, display_name, is_compacted: true, ...(chance !== undefined ? { chance } : {}) };
+        }
+      }
     }
   }
 

@@ -2,6 +2,7 @@
 import { ref, computed, nextTick } from 'vue';
 import type { AppConfig, ConfigItem } from '../types';
 import { getWikiUrl } from '../utils/wikiIcons';
+import { getStackSize } from '../utils/stackSizes';
 import ItemChip from './ItemChip.vue';
 
 const props = defineProps<{
@@ -80,23 +81,27 @@ const calculationResults = computed(() => {
   if (!targetItem) return null;
 
   const item = targetItem as ConfigItem;
-  const effectiveAmount = item.amount * (item.chance || 1);
+  const stackSize = getStackSize(item.type);
+  const effectiveAmount = item.amount * (item.chance || 1) * (item.is_compacted ? stackSize : 1);
   const runs = Math.ceil(targetQuantity.value / effectiveAmount);
 
   const inputsNeeded = Object.values(currentRecipe.value.input).map(i => {
     const inputItem = i as ConfigItem;
+    const s = getStackSize(inputItem.type);
     return {
       ...inputItem,
-      total: inputItem.amount * runs
+      total: inputItem.amount * runs * (inputItem.is_compacted ? s : 1)
     };
   });
   const outputsGained = Object.entries(currentRecipe.value.output).map(([key, o]) => {
     const outputItem = o as ConfigItem;
+    const s = getStackSize(outputItem.type);
+    const mult = outputItem.is_compacted ? s : 1;
     return {
       ...outputItem,
       key,
-      total: outputItem.amount * runs,
-      expected: outputItem.amount * (outputItem.chance || 1) * runs
+      total: outputItem.amount * runs * mult,
+      expected: outputItem.amount * (outputItem.chance || 1) * runs * mult
     };
   });
 
@@ -281,7 +286,7 @@ const formatChance = (c: number) => {
             class="h-13 bg-bg border border-border2 rounded-md text-white font-garamond text-[1.05rem] text-left p-[10px_14px] outline-none cursor-pointer"
           >
             <option v-for="(o, key) in currentRecipe.output" :key="key" :value="key">
-              {{ idn(o) }} {{ (o as any).chance ? '(' + formatChance((o as any).chance) + '%)' : '' }}
+              {{ idn(o) }}{{ (o as any).is_compacted ? ' (Compacted)' : '' }} {{ (o as any).chance ? '(' + formatChance((o as any).chance) + '%)' : '' }}
             </option>
           </select>
         </div>
@@ -299,13 +304,16 @@ const formatChance = (c: number) => {
             <span class="flex items-center gap-2.5 text-text">
               <img v-if="getIconUrl(o.type)" :src="getIconUrl(o.type)!" width="26" height="26" class="pixelated" />
               {{ idn(o) }}
+              <span v-if="o.is_compacted" class="text-[0.65rem] bg-gold/20 text-gold px-1.5 py-0.5 rounded border border-gold/30 font-cinzel uppercase tracking-tighter">
+                Compacted
+              </span>
               <span v-if="o.chance !== undefined" class="text-[0.7rem] bg-purple/20 text-purple2 px-1.5 py-0.5 rounded border border-purple/30 font-cinzel">
                 {{ formatChance(o.chance) }}%
               </span>
             </span>
             <span>
               <span class="text-gold2 font-semibold text-[1.05rem]">{{ Math.round(o.expected || o.total).toLocaleString() }}</span>
-              <span class="text-text3 text-[0.84rem] ml-1"> ({{ o.amount }}×{{ (o.chance || 1).toFixed(2) }}×{{ calculationResults.runs }})</span>
+              <span class="text-text3 text-[0.84rem] ml-1"> ({{ o.amount }}×{{ o.is_compacted ? getStackSize(o.type) + '×' : '' }}{{ (o.chance || 1).toFixed(2) }}×{{ calculationResults.runs }})</span>
             </span>
           </div>
 
@@ -314,10 +322,13 @@ const formatChance = (c: number) => {
             <span class="flex items-center gap-2.5 text-text">
               <img v-if="getIconUrl(i.type)" :src="getIconUrl(i.type)!" width="26" height="26" class="pixelated" />
               {{ idn(i) }}
+              <span v-if="i.is_compacted" class="text-[0.65rem] bg-gold/20 text-gold px-1.5 py-0.5 rounded border border-gold/30 font-cinzel uppercase tracking-tighter">
+                Compacted
+              </span>
             </span>
             <span>
               <span class="text-gold2 font-semibold text-[1.05rem]">{{ i.total.toLocaleString() }}</span>
-              <span class="text-text3 text-[0.84rem] ml-1"> ({{ i.amount }}×{{ calculationResults.runs }})</span>
+              <span class="text-text3 text-[0.84rem] ml-1"> ({{ i.amount }}×{{ i.is_compacted ? getStackSize(i.type) + '×' : '' }}{{ calculationResults.runs }})</span>
             </span>
           </div>
 

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import type { ConfigItem } from '../types';
 import { getWikiUrl, FB } from '../utils/wikiIcons';
+import { getStackSize } from '../utils/stackSizes';
 
 const props = defineProps<{
   item: ConfigItem;
@@ -22,6 +23,9 @@ const formatChance = (c: number) => {
   const p = c * 100;
   return p >= 1 ? p.toFixed(1) : p.toPrecision(2);
 };
+
+const stackSize = computed(() => getStackSize(props.item.type));
+const fullAmount = computed(() => props.item.is_compacted ? props.item.amount * stackSize.value : props.item.amount);
 </script>
 
 <template>
@@ -48,11 +52,19 @@ const formatChance = (c: number) => {
     <div class="item-info">
       <div class="text-white text-[1.05rem] leading-tight flex items-center gap-2">
         {{ displayName }}
+        <span v-if="item.is_compacted" class="text-[0.65rem] bg-gold/20 text-gold px-1.5 py-0.5 rounded border border-gold/30 font-cinzel uppercase tracking-tighter">
+          Compacted
+        </span>
         <span v-if="item.chance !== undefined" class="text-[0.7rem] bg-purple/20 text-purple2 px-1.5 py-0.5 rounded border border-purple/30 font-cinzel">
           {{ formatChance(item.chance) }}%
         </span>
       </div>
-      <div class="text-gold font-semibold text-[1rem]">×{{ item.amount.toLocaleString() }}</div>
+      <div class="text-gold font-semibold text-[1rem]">
+        ×{{ fullAmount.toLocaleString() }}
+        <span v-if="item.is_compacted" class="text-text3 font-normal text-[0.8rem] ml-1">
+          ({{ item.amount.toLocaleString() }} stacks)
+        </span>
+      </div>
       <div v-if="item.display_name" class="text-text3 text-[0.8rem]">{{ item.type }}</div>
     </div>
   </div>

@@ -3,6 +3,7 @@ export interface ConfigItem {
   amount: number;
   display_name: string | null;
   chance?: number;
+  is_compacted?: boolean;
 }
 
 export interface Factory {
