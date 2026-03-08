@@ -84,7 +84,7 @@ function getEmoji(type: string) {
   <option value="Unique Items L-H"># of Unique Items Needed To Create (Lowest-Highest)</option>
 </select>
     <div class="mb-4 flex flex-wrap gap-2 justify-center h-[100%]">
-  <button v-for="type in Object.keys(props.config.factories).map(id => props.config.factories[id].type).filter((v, i, a) => a.indexOf(v) === i)" :key="type"
+  87   <button v-for="type in Object.keys(props.config.factories).map(id => props.config.factories[id]).filter(f => f !== undefined).map(f => f.type).filter((v, i, a) => a.indexOf(v) === i)" :key="type"
     @click="toggleType(type)"
     :class="[
       'px-3 h-[70%] py-1 rounded-md border font-semibold text-sm transition-all duration-300  ease-in-out',
