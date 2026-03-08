@@ -6,7 +6,7 @@ import FactoryGrid from './components/FactoryGrid.vue';
 import RecipeExplorer from './components/RecipeExplorer.vue';
 import ProductionCalculator from './components/ProductionCalculator.vue';
 import ItemChip from './components/ItemChip.vue';
-import { nextTick } from 'vue';
+
 
 const config = ref<AppConfig | null>(null);
 const loading = ref(true);

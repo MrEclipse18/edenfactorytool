@@ -14,7 +14,7 @@ const emit = defineEmits<{
 }>();
 
 // <-- define reactive state for the dropdown
-const filterOptions = ref<'A-Z' | 'Recipe Count'>('A-Z');
+const filterOptions = ref<'A-Z' | 'Z-A' | 'Citadel Hardness' | 'Recipe Count' | 'Unique Items' | 'Unique Items L-H'>('A-Z');
 
 const filteredFactories = computed(() => {
   const fl = props.filter.toLowerCase();
@@ -35,12 +35,14 @@ const filteredFactories = computed(() => {
     factories.sort((b, a) => a.name.localeCompare(b.name));
   } else if (filterOptions.value === 'Unique Items') {
   factories.sort((a, b) => Object.keys(b.setupcost).length - Object.keys(a.setupcost).length);
-  }  else if (filterOptions.value === 'Citadel Hardness') {
-    factories.sort((a, b) => b.citadelBreakReduction - a.citadelBreakReduction);
-  }  else if (filterOptions.value === 'Unique Items L-H') {
-  factories.sort((b, a) => Object.keys(b.setupcost).length - Object.keys(a.setupcost).length);
+  } else if (filterOptions.value === 'Citadel Hardness') {
+    factories.sort((a, b) => (b.citadelBreakReduction ?? 0) - (a.citadelBreakReduction ?? 0));
+  } else if (filterOptions.value === 'Unique Items L-H') {
+    factories.sort((a, b) => Object.keys(a.setupcost).length - Object.keys(b.setupcost).length);
   } else if (filterOptions.value === 'Recipe Count') {
     factories.sort((a, b) => b.recipes.length - a.recipes.length);
+  } else if (filterOptions.value === 'Unique Items') {
+    factories.sort((b, a) => Object.keys(b.setupcost).length - Object.keys(a.setupcost).length);
   }
 
   return factories;
@@ -64,14 +66,13 @@ function getEmoji(type: string) {
     <div class="section-title">
       {{ filter ? `Results — ${filteredFactories.length} factories` : 'All Factories' }}
     </div>
-     <select v-model="filterOptions" style = "border:2px solid var(--color-purple2)"class="custom-scroll mb-10 p-[10px] bg-bg3 rounded-md max-w-[200px] text-white font-garamond text-[1.05rem] cursor-pointer">
-      <option value="A-Z">A-Z</option>
-      <option value="Z-A">Z-A</option>
-        Citadel Hardness
-      <option value="Citadel Hardness">Citadel Hardness</option>
-      <option value="Recipe Count">Recipe Count</option>
-      <option value="Unique Items"># of Unique Items Needed To Create (Highest-Lowest)</option>
-      <option value="Unique Items L-H"># of Unique Items Needed To Create (Lowest-Highest)</option>
+     <select v-model="filterOptions" style="border:2px solid var(--color-purple2)"class="custom-scroll mb-10 p-[10px] bg-bg3 rounded-md max-w-[200px] text-white font-garamond text-[1.05rem] cursor-pointer">
+      <option value="A-Z">Name (A-Z)</option>
+      <option value="Z-A">Name (Z-A)</option>
+      <option value="Citadel Hardness">Citadel Hardness (High-Low)</option>
+      <option value="Recipe Count">Recipe Count (High-Low)</option>
+      <option value="Unique Items">Unique Setup Items (High-Low)</option>
+      <option value="Unique Items L-H">Unique Setup Items (Low-High)</option>
     </select>
 
     <div v-if="filteredFactories.length === 0" class="text-center py-16 text-text3 italic text-[1.1rem]">
