@@ -23,11 +23,7 @@ const filteredFactories = computed(() => {
   let factories = Object.values(props.config.factories).filter(f =>
     !fl ||
     f.name.toLowerCase().includes(fl) ||
-    f.id.includes(fl) ||
-    f.recipes.some(r => {
-      const rec = props.config.recipes[r];
-      return rec && rec.name.toLowerCase().includes(fl);
-    })
+    f.id.includes(fl)
   );
   if (filterOptions.value === 'A-Z') {
     factories.sort((a, b) => a.name.localeCompare(b.name));

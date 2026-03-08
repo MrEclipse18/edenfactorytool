@@ -215,7 +215,7 @@ function fmt(t: string | null) {
 
         <!-- CALCULATOR PANEL -->
         <div v-if="activePanel === 'calculator'">
-          <ProductionCalculator :config="config" />
+          <ProductionCalculator :config="config" :filter="globalSearch" />
         </div>
       </div>
   <div class="fixed bottom-4 right-4" style="display:flex; gap:15px">

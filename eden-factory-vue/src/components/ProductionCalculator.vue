@@ -6,6 +6,7 @@ import ItemChip from './ItemChip.vue';
 
 const props = defineProps<{
   config: AppConfig;
+  filter: string;
 }>();
 
 const step = ref(1);
@@ -13,6 +14,19 @@ const selectedFactoryId = ref<string | null>(null);
 const selectedRecipeId = ref<string | null>(null);
 const targetQuantity = ref(64);
 const selectedOutputItem = ref('');
+
+const searchResults = computed(() => {
+  const fl = props.filter.toLowerCase();
+  if (!fl) return [];
+
+  return Object.values(props.config.recipes).filter(r => {
+    if (r.name.toLowerCase().includes(fl) || r.id.toLowerCase().includes(fl)) return true;
+    return [...Object.values(r.input), ...Object.values(r.output)].some(i => {
+      const displayName = i.display_name || i.type.split('_').map(w => (w[0] ? w[0].toUpperCase() : '') + w.slice(1).toLowerCase()).join(' ');
+      return displayName.toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl);
+    });
+  });
+});
 
 const factories = computed(() => {
   return Object.values(props.config.factories).sort((a, b) => a.name.localeCompare(b.name));
@@ -116,35 +130,15 @@ function idn(item: any) {
 
 <template>
   <div class="max-w-full">
-    <!-- Step 1: Pick factory -->
-    <div v-if="step === 1">
-      <div class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
-        Step 1 — Choose a Factory
-      </div>
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
-        <button
-          v-for="f in factories"
-          :key="f.id"
-          class="bg-linear-to-br from-bg2 to-bg3 border border-border rounded-lg p-[14px_16px] cursor-pointer text-left transition-all hover:border-purple2 hover:bg-purple/10 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(109,40,217,0.2)]"
-          @click="selectFactory(f.id)"
-        >
-          <div class="font-cinzel text-[0.88rem] font-semibold text-white mb-[3px]">{{ f.name }}</div>
-          <div class="text-[0.82rem] text-text3">{{ f.recipes.length }} recipes</div>
-        </button>
-      </div>
-    </div>
-
-    <!-- Step 2: Pick recipe -->
-    <div v-if="step === 2">
-      <div style = "display:flex;justify-content: space-between" class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
-        Step 2 — Choose a Recipe
-        <button  class="bg-transparent border border-border2 text-text3 font-cinzel text-[0.72rem] tracking-[0.05em] py-1 px-3 rounded-sm cursor-pointer transition-all hover:border-purple2 hover:text-purple2" @click="step = 1">
-          ← Change Factory
-        </button>
+    <!-- Search Results (Visible when filter is active) -->
+    <div v-if="filter">
+      <div class="section-title">Search Results — Recipes & Items</div>
+      <div v-if="searchResults.length === 0" class="text-center py-16 text-text3 italic text-[1.1rem]">
+        No recipes or items match "{{ filter }}".
       </div>
       <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2.5">
         <button
-          v-for="r in factoryRecipes"
+          v-for="r in searchResults"
           :key="r.id"
           class="bg-bg2 border border-border rounded-lg p-[12px_14px] cursor-pointer text-left transition-all flex items-center gap-3 hover:border-border2 hover:bg-bg3 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(109,40,217,0.15)]"
           @click="selectRecipe(r.id)"
@@ -160,11 +154,58 @@ function idn(item: any) {
       </div>
     </div>
 
-    <!-- Step 3: Set quantity + results -->
+    <!-- Wizard Steps (Visible when no filter is active) -->
+    <template v-else>
+      <!-- Step 1: Pick factory -->
+      <div v-if="step === 1">
+        <div class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
+          Step 1 — Choose a Factory
+        </div>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
+          <button
+            v-for="f in factories"
+            :key="f.id"
+            class="bg-linear-to-br from-bg2 to-bg3 border border-border rounded-lg p-[14px_16px] cursor-pointer text-left transition-all hover:border-purple2 hover:bg-purple/10 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(109,40,217,0.2)]"
+            @click="selectFactory(f.id)"
+          >
+            <div class="font-cinzel text-[0.88rem] font-semibold text-white mb-[3px]">{{ f.name }}</div>
+            <div class="text-[0.82rem] text-text3">{{ f.recipes.length }} recipes</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Pick recipe -->
+      <div v-if="step === 2">
+        <div style = "display:flex;justify-content: space-between" class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
+          Step 2 — Choose a Recipe
+          <button  class="bg-transparent border border-border2 text-text3 font-cinzel text-[0.72rem] tracking-[0.05em] py-1 px-3 rounded-sm cursor-pointer transition-all hover:border-purple2 hover:text-purple2" @click="step = 1">
+            ← Change Factory
+          </button>
+        </div>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2.5">
+          <button
+            v-for="r in factoryRecipes"
+            :key="r.id"
+            class="bg-bg2 border border-border rounded-lg p-[12px_14px] cursor-pointer text-left transition-all flex items-center gap-3 hover:border-border2 hover:bg-bg3 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(109,40,217,0.15)]"
+            @click="selectRecipe(r.id)"
+          >
+            <div class="flex-shrink-0">
+               <img v-if="Object.values(r.output)[0]" :src="getIconUrl((Object.values(r.output)[0] as any).type)!" width="32" height="32" class="pixelated" />
+            </div>
+            <div class="min-w-0">
+              <div class="text-white text-[1rem] mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{{ r.name }}</div>
+              <div class="text-[0.8rem] text-text3 font-cinzel">{{ tn(r.type) }}{{ r.production_time ? ' · ' + fmt(r.production_time) : '' }}</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Step 3: Set quantity + results (Always visible if a recipe is selected, even if searching) -->
     <div v-if="step === 3 && currentRecipe">
       <div style = "display:flex;justify-content: space-between"class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
         Step 3 — Calculate
-        <button class="bg-transparent border border-border2 text-text3 font-cinzel text-[0.72rem] tracking-[0.05em] py-1 px-3 rounded-sm cursor-pointer transition-all hover:border-purple2 hover:text-purple2" @click="step = 2">
+        <button v-if="!filter" class="bg-transparent border border-border2 text-text3 font-cinzel text-[0.72rem] tracking-[0.05em] py-1 px-3 rounded-sm cursor-pointer transition-all hover:border-purple2 hover:text-purple2" @click="step = 2">
           ← Change Recipe
         </button>
       </div>
