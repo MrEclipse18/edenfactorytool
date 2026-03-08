@@ -95,7 +95,7 @@ function selectRecipe(rid: string) {
 </script>
 
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-5 min-h-[70vh]">
+  <div class="custom-scroll grid grid-cols-1 md:grid-cols-[320px_1fr] gap-5 min-h-[70vh] ">
     <div class="flex flex-col gap-2.5">
       <div class="flex flex-col gap-2 mb-4">
         <select
