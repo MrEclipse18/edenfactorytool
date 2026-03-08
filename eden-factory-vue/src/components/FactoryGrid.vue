@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Factory, AppConfig } from '../types';
+import type { AppConfig } from '../types';
 import { getWikiUrl, FB } from '../utils/wikiIcons';
 
 const props = defineProps<{

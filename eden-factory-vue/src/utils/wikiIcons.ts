@@ -72,7 +72,7 @@ export const FB: Record<string, string> = {
 
 export function getWikiUrl(type: string): string | null {
   if (WIKI_OVR[type] === null) return null;
-  const n = WIKI_OVR[type] || type.split('_').map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join('_');
+  const n = WIKI_OVR[type] || type.split('_').map(w => (w[0] ? w[0].toUpperCase() : '') + w.slice(1).toLowerCase()).join('_');
   const ext = WIKI_GIF.has(type) ? '.gif' : '.png';
   return WIKI_BASE + n + ext;
 }

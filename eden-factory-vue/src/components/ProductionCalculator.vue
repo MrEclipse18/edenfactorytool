@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { AppConfig, Recipe, Factory } from '../types';
-import { getWikiUrl, FB } from '../utils/wikiIcons';
+import type { AppConfig, ConfigItem } from '../types';
+import { getWikiUrl } from '../utils/wikiIcons';
 import ItemChip from './ItemChip.vue';
 
 const props = defineProps<{
@@ -22,7 +22,7 @@ const factoryRecipes = computed(() => {
   if (!selectedFactoryId.value) return [];
   return (props.config.factories[selectedFactoryId.value]?.recipes || [])
     .map(id => props.config.recipes[id])
-    .filter(Boolean);
+    .filter((r): r is any => !!r);
 });
 
 const currentRecipe = computed(() => {
@@ -38,8 +38,11 @@ function selectFactory(id: string) {
 function selectRecipe(id: string) {
   selectedRecipeId.value = id;
   const r = props.config.recipes[id];
-  if (r && Object.values(r.output).length > 0) {
-    selectedOutputItem.value = Object.values(r.output)[0].type;
+  if (r) {
+    const outputs = Object.values(r.output);
+    if (outputs.length > 0 && outputs[0]) {
+      selectedOutputItem.value = outputs[0].type;
+    }
   }
   step.value = 3;
 }
@@ -47,18 +50,24 @@ function selectRecipe(id: string) {
 const calculationResults = computed(() => {
   if (!currentRecipe.value) return null;
   const outputs = Object.values(currentRecipe.value.output);
-  const targetItem = outputs.find(o => o.type === selectedOutputItem.value) || outputs[0];
+  const targetItem = outputs.find(o => o && o.type === selectedOutputItem.value) || outputs[0];
   if (!targetItem) return null;
 
-  const runs = Math.ceil(targetQuantity.value / targetItem.amount);
-  const inputsNeeded = Object.values(currentRecipe.value.input).map(i => ({
-    ...i,
-    total: i.amount * runs
-  }));
-  const outputsGained = Object.values(currentRecipe.value.output).map(o => ({
-    ...o,
-    total: o.amount * runs
-  }));
+  const runs = Math.ceil(targetQuantity.value / (targetItem as ConfigItem).amount);
+  const inputsNeeded = Object.values(currentRecipe.value.input).map(i => {
+    const item = i as ConfigItem;
+    return {
+      ...item,
+      total: item.amount * runs
+    };
+  });
+  const outputsGained = Object.values(currentRecipe.value.output).map(o => {
+    const item = o as ConfigItem;
+    return {
+      ...item,
+      total: item.amount * runs
+    };
+  });
 
   const totalTimeSeconds = currentRecipe.value.production_time ? parseTimeToSeconds(currentRecipe.value.production_time) * runs : 0;
 
@@ -67,7 +76,7 @@ const calculationResults = computed(() => {
 
 function parseTimeToSeconds(t: string): number {
   const m = t.match(/^(\d+)([smh])$/);
-  if (!m) return 0;
+  if (!m || !m[1]) return 0;
   const v = parseInt(m[1]), u = m[2];
   return u === 's' ? v : u === 'm' ? v * 60 : v * 3600;
 }
@@ -89,7 +98,7 @@ function tn(t: string) {
 function fmt(t: string | null) {
   if (!t) return null;
   const m = t.match(/^(\d+)([smh])$/);
-  if (!m) return t;
+  if (!m || !m[1]) return t;
   const v = parseInt(m[1]), u = m[2];
   return u === 's' ? (v === 1 ? '1 second' : `${v} seconds`) :
          u === 'm' ? (v === 1 ? '1 minute' : `${v} minutes`) :
@@ -101,7 +110,7 @@ function getIconUrl(type: string) {
 }
 
 function idn(item: any) {
-  return item.display_name || item.type.split('_').map((w: string) => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  return item.display_name || item.type.split('_').map((w: string) => (w[0] ? w[0].toUpperCase() : '') + w.slice(1).toLowerCase()).join(' ');
 }
 </script>
 
@@ -141,7 +150,7 @@ function idn(item: any) {
           @click="selectRecipe(r.id)"
         >
           <div class="flex-shrink-0">
-             <img v-if="Object.values(r.output)[0]" :src="getIconUrl(Object.values(r.output)[0].type)!" width="32" height="32" class="pixelated" />
+             <img v-if="Object.values(r.output)[0]" :src="getIconUrl((Object.values(r.output)[0] as any).type)!" width="32" height="32" class="pixelated" />
           </div>
           <div class="min-w-0">
             <div class="text-white text-[1rem] mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{{ r.name }}</div>

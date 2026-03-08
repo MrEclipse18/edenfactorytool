@@ -12,8 +12,11 @@ function parseItemStack(obj: any): ConfigItem {
     // If it's a map where values are item stacks (common in this config)
     // and we don't have a 'type' directly on this object, but it has one child which is an object
     const keys = Object.keys(obj);
-    if (!obj.type && keys.length === 1 && typeof obj[keys[0]] === 'object') {
-      return parseItemStack(obj[keys[0]]);
+    if (!obj.type && keys.length === 1 && keys[0] !== undefined) {
+      const key = keys[0];
+      if (typeof obj[key] === 'object') {
+        return parseItemStack(obj[key]);
+      }
     }
 
     type = obj.type || 'UNKNOWN';

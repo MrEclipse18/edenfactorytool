@@ -14,7 +14,7 @@ const imgError = ref(false);
 
 const displayName = computed(() => {
   if (props.item.display_name) return props.item.display_name;
-  return props.item.type.split('_').map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  return props.item.type.split('_').map(w => (w[0] ? w[0].toUpperCase() : '') + w.slice(1).toLowerCase()).join(' ');
 });
 
 const fallbackEmoji = computed(() => FB[props.item.type] || '❓');

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import type { AppConfig, Recipe } from '../types';
-import { getWikiUrl, FB } from '../utils/wikiIcons';
+import { getWikiUrl } from '../utils/wikiIcons';
 import ItemChip from './ItemChip.vue';
 
 const props = defineProps<{
@@ -24,12 +24,12 @@ const filteredRecipes = computed(() => {
   const fl = search.value.toLowerCase();
   return recipesByFactory.value
     .map(id => props.config.recipes[id])
-    .filter(r => {
+    .filter((r): r is Recipe => {
       if (!r) return false;
       if (!fl) return true;
       if (r.name.toLowerCase().includes(fl) || r.id.toLowerCase().includes(fl)) return true;
       return [...Object.values(r.input), ...Object.values(r.output)].some(i => {
-        const displayName = i.display_name || i.type.split('_').map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        const displayName = i.display_name || i.type.split('_').map(w => (w[0] ? w[0].toUpperCase() : '') + w.slice(1).toLowerCase()).join(' ');
         return displayName.toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl);
       });
     });
@@ -37,7 +37,7 @@ const filteredRecipes = computed(() => {
 
 const selectedRecipe = computed(() => {
   if (!selectedRecipeId.value) return filteredRecipes.value[0] || null;
-  return props.config.recipes[selectedRecipeId.value] || filteredFactories.value[0] || null;
+  return props.config.recipes[selectedRecipeId.value] || filteredRecipes.value[0] || null;
 });
 
 const factories = computed(() => {
@@ -55,7 +55,7 @@ function tn(t: string) {
 function fmt(t: string | null) {
   if (!t) return null;
   const m = t.match(/^(\d+)([smh])$/);
-  if (!m) return t;
+  if (!m || !m[1]) return t;
   const v = parseInt(m[1]), u = m[2];
   return u === 's' ? (v === 1 ? '1 second' : `${v} seconds`) :
          u === 'm' ? (v === 1 ? '1 minute' : `${v} minutes`) :
@@ -90,7 +90,7 @@ function getIconUrl(type: string) {
           @click="selectedRecipeId = r.id"
         >
           <div class="flex-shrink-0">
-            <img v-if="Object.values(r.output)[0]" :src="getIconUrl(Object.values(r.output)[0].type)!" width="28" height="28" class="pixelated" />
+            <img v-if="Object.values(r.output)[0]" :src="getIconUrl((Object.values(r.output)[0] as any).type)!" width="28" height="28" class="pixelated" />
           </div>
           <div class="min-w-0">
             <div class="text-white text-[1rem] whitespace-nowrap overflow-hidden text-ellipsis">{{ r.name }}</div>
@@ -115,7 +115,7 @@ function getIconUrl(type: string) {
         <div>
           <div class="font-cinzel text-[0.76rem] tracking-[0.1em] text-text3 mb-3 uppercase">Inputs</div>
           <div class="flex flex-wrap gap-2.5">
-            <ItemChip v-for="i in Object.values(selectedRecipe.input)" :key="i.type" :item="i" />
+            <ItemChip v-for="i in Object.values(selectedRecipe.input)" :key="(i as any).type" :item="(i as any)" />
             <span v-if="Object.values(selectedRecipe.input).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
           </div>
         </div>
@@ -125,7 +125,7 @@ function getIconUrl(type: string) {
         <div>
           <div class="font-cinzel text-[0.76rem] tracking-[0.1em] text-text3 mb-3 uppercase">Output</div>
           <div class="flex flex-wrap gap-2.5">
-            <ItemChip v-for="o in Object.values(selectedRecipe.output)" :key="o.type" :item="o" />
+            <ItemChip v-for="o in Object.values(selectedRecipe.output)" :key="(o as any).type" :item="(o as any)" />
             <span v-if="Object.values(selectedRecipe.output).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
           </div>
         </div>

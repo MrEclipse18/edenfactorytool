@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { parseConfig } from './utils/yamlParser';
-import type { AppConfig, Factory } from './types';
+import type { AppConfig } from './types';
 import FactoryGrid from './components/FactoryGrid.vue';
 import RecipeExplorer from './components/RecipeExplorer.vue';
 import ProductionCalculator from './components/ProductionCalculator.vue';
@@ -59,7 +59,7 @@ function tn(t: string) {
 function fmt(t: string | null) {
   if (!t) return null;
   const m = t.match(/^(\d+)([smh])$/);
-  if (!m) return t;
+  if (!m || !m[1]) return t;
   const v = parseInt(m[1]), u = m[2];
   return u === 's' ? (v === 1 ? '1 second' : `${v} seconds`) :
          u === 'm' ? (v === 1 ? '1 minute' : `${v} minutes`) :
