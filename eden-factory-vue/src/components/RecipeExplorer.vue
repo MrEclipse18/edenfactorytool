@@ -78,6 +78,16 @@ function getIconUrl(type: string) {
   return getWikiUrl(type);
 }
 
+function getRecipeFactoryNames(recipeId: string): string {
+  const matchingFactories = Object.values(props.config.factories)
+    .filter(f => f.recipes.includes(recipeId))
+    .map(f => f.name);
+  
+  if (matchingFactories.length === 0) return 'Unknown Factory';
+  if (matchingFactories.length > 2) return `${matchingFactories[0]} +${matchingFactories.length - 1} more`;
+  return matchingFactories.join(', ');
+}
+
 function selectRecipe(rid: string) {
   selectedRecipeId.value = rid;
   emit('update:search', ''); // Clear global search when recipe is clicked
@@ -111,8 +121,8 @@ function selectRecipe(rid: string) {
           </div>
           <div class="min-w-0">
             <div class="text-white text-[1rem] whitespace-nowrap overflow-hidden text-ellipsis">{{ r.name }}</div>
-            <div class="text-text3 text-[0.8rem] font-cinzel tracking-[0.03em]">
-              {{ tn(r.type) }}{{ r.production_time ? ' · ' + fmt(r.production_time) : '' }}
+            <div class="text-text3 text-[0.8rem] font-cinzel tracking-[0.03em] whitespace-nowrap overflow-hidden text-ellipsis">
+              {{ getRecipeFactoryNames(r.id) }}
             </div>
           </div>
         </div>
