@@ -277,9 +277,8 @@ const formatChance = (c: number) => {
           <div class="flex items-center gap-5.5 flex-wrap"> 
           <input
             v-model.number="targetQuantity"
-              @input="targetQuantity = Math.min(Math.max(targetQuantity, 1), 999999)"
-  type="number"
-  min="1"
+            type="number"
+            min="1"
             class="h-13 bg-bg border border-border2 rounded-md text-white font-garamond text-[1.2rem] font-semibold p-[10px_14px] w-[120px] outline-none text-left focus:border-purple2 focus:shadow-[0_0_0_3px_rgba(192,132,232,0.12)]"
           />
           <select
