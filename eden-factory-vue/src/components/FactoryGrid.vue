@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import type { AppConfig } from '../types';
 import { getWikiUrl, FB } from '../utils/wikiIcons';
+const hiddenTypes = ref<string[]>([]);
 
 const props = defineProps<{
   config: AppConfig;
@@ -20,11 +21,16 @@ const filteredFactories = computed(() => {
   const fl = props.filter.toLowerCase();
 
   // filter factories first
-  let factories = Object.values(props.config.factories).filter(f =>
-    !fl ||
-    f.name.toLowerCase().includes(fl) ||
-    f.id.includes(fl)
-  );
+   let factories = Object.values(props.config.factories)
+    .filter(f =>
+      !fl ||
+      f.name.toLowerCase().includes(fl) ||
+      f.id.includes(fl) ||
+      f.recipes.some(r => {
+        const rec = props.config.recipes[r];
+        return rec && rec.name.toLowerCase().includes(fl);
+      })
+    ).filter(f => !hiddenTypes.value.includes(f.type));
   if (filterOptions.value === 'A-Z') {
     factories.sort((a, b) => a.name.localeCompare(b.name));
   } else if (filterOptions.value === 'Z-A') {
@@ -43,7 +49,13 @@ const filteredFactories = computed(() => {
 
   return factories;
 });
-
+function toggleType(type: string) {
+  if (hiddenTypes.value.includes(type)) {
+    hiddenTypes.value = hiddenTypes.value.filter(t => t !== type);
+  } else {
+    hiddenTypes.value.push(type);
+  }
+}
 function getIconUrl(type: string) {
   return getWikiUrl(type);
 }
@@ -62,15 +74,27 @@ function getEmoji(type: string) {
     <div class="section-title">
       {{ filter ? `Results — ${filteredFactories.length} factories` : 'All Factories' }}
     </div>
-     <select v-model="filterOptions" style="border:2px solid var(--color-purple2)"class="custom-scroll mb-10 p-[10px] bg-bg3 rounded-md max-w-[200px] text-white font-garamond text-[1.05rem] cursor-pointer">
-      <option value="A-Z">Name (A-Z)</option>
-      <option value="Z-A">Name (Z-A)</option>
-      <option value="Citadel Hardness">Citadel Hardness (High-Low)</option>
-      <option value="Recipe Count">Recipe Count (High-Low)</option>
-      <option value="Unique Items">Unique Setup Items (High-Low)</option>
-      <option value="Unique Items L-H">Unique Setup Items (Low-High)</option>
-    </select>
-
+    <div style="display:flex; height:50px;gap:30px; justify-content:space-between">
+     <select v-model="filterOptions" class="custom-scroll transition-all duration-300 ease-in-out h-[90%] hover:border-[var(--color-purple2)] border-2 border-[var(--color-purple4)] mb-10 p-[10px] bg-bg3 rounded-md max-w-[200px] text-white font-garamond text-[1.05rem] cursor-pointer">
+  <option value="A-Z">A-Z</option>
+  <option value="Z-A">Z-A</option>
+  <option value="Citadel Hardness">Citadel Hardness</option>
+  <option value="Recipe Count">Recipe Count</option>
+  <option value="Unique Items"># of Unique Items Needed To Create (Highest-Lowest)</option>
+  <option value="Unique Items L-H"># of Unique Items Needed To Create (Lowest-Highest)</option>
+</select>
+    <div class="mb-4 flex flex-wrap gap-2 justify-center h-[100%]">
+  <button v-for="type in Object.keys(props.config.factories).map(id => props.config.factories[id].type).filter((v, i, a) => a.indexOf(v) === i)" :key="type"
+    @click="toggleType(type)"
+    :class="[
+      'px-3 h-[70%] py-1 rounded-md border font-semibold text-sm transition-all duration-300  ease-in-out',
+      hiddenTypes.includes(type) ? 'bg-bg  text-white border-[var(--color-purple4)]' : 'bg-bg3 text-[var(--color-purple2)] border-[var(--color-purple2)]'
+    ]"
+  >
+    {{ type }}
+  </button>
+</div>
+</div>
     <div v-if="filteredFactories.length === 0" class="text-center py-16 text-text3 italic text-[1.1rem]">
       No factories match your search.
     </div>
