@@ -136,9 +136,9 @@ function idn(item: any) {
 
     <!-- Step 2: Pick recipe -->
     <div v-if="step === 2">
-      <div class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
+      <div style = "display:flex;justify-content: space-between" class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
         Step 2 — Choose a Recipe
-        <button class="bg-transparent border border-border2 text-text3 font-cinzel text-[0.72rem] tracking-[0.05em] py-1 px-3 rounded-sm cursor-pointer transition-all hover:border-purple2 hover:text-purple2" @click="step = 1">
+        <button  class="bg-transparent border border-border2 text-text3 font-cinzel text-[0.72rem] tracking-[0.05em] py-1 px-3 rounded-sm cursor-pointer transition-all hover:border-purple2 hover:text-purple2" @click="step = 1">
           ← Change Factory
         </button>
       </div>
@@ -162,7 +162,7 @@ function idn(item: any) {
 
     <!-- Step 3: Set quantity + results -->
     <div v-if="step === 3 && currentRecipe">
-      <div class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
+      <div style = "display:flex;justify-content: space-between"class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
         Step 3 — Calculate
         <button class="bg-transparent border border-border2 text-text3 font-cinzel text-[0.72rem] tracking-[0.05em] py-1 px-3 rounded-sm cursor-pointer transition-all hover:border-purple2 hover:text-purple2" @click="step = 2">
           ← Change Recipe
@@ -198,22 +198,25 @@ function idn(item: any) {
           </div>
         </div>
 
-        <div class="flex items-center gap-3.5 flex-wrap py-[18px] border-t border-border mt-2">
-          <span class="text-[1.05rem] text-text2">I want</span>
+        <div class="py-[18px] border-t border-border mt-2">
+            <div class="font-cinzel text-[0.75rem]  text-text3 mb-2.5 uppercase">I need:</div>
+
+          <div class="flex items-center gap-5.5 flex-wrap"> 
           <input
             v-model.number="targetQuantity"
             type="number"
             min="1"
-            class="bg-bg border border-border2 rounded-md text-white font-garamond text-[1.2rem] font-semibold p-[10px_14px] w-[120px] outline-none text-center focus:border-purple2 focus:shadow-[0_0_0_3px_rgba(192,132,232,0.12)]"
+            class="h-13 bg-bg border border-border2 rounded-md text-white font-garamond text-[1.2rem] font-semibold p-[10px_14px] w-[120px] outline-none text-left focus:border-purple2 focus:shadow-[0_0_0_3px_rgba(192,132,232,0.12)]"
           />
           <select
             v-model="selectedOutputItem"
-            class="bg-bg border border-border2 rounded-md text-white font-garamond text-[1.05rem] p-[10px_14px] outline-none cursor-pointer"
+            class="h-13 bg-bg border border-border2 rounded-md text-white font-garamond text-[1.05rem] text-left p-[10px_14px] outline-none cursor-pointer"
           >
             <option v-for="o in Object.values(currentRecipe.output)" :key="o.type" :value="o.type">
               {{ idn(o) }}
             </option>
           </select>
+        </div>
         </div>
 
         <div v-if="calculationResults" class="mt-5">

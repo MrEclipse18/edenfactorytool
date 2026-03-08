@@ -71,17 +71,19 @@ function getIconUrl(type: string) {
   <div class="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-5 min-h-[70vh]">
     <div class="flex flex-col gap-2.5">
       <div class="flex flex-col gap-2 mb-4">
-        <select
-          v-model="selectedFactoryId"
-          class="bg-bg2 border border-border2 rounded-md text-white font-garamond text-[1.05rem] p-[8px_13px] outline-none cursor-pointer focus:border-purple2"
-        >
-          <option value="">All Factories</option>
-          <option v-for="f in factories" :key="f.id" :value="f.id">{{ f.name }}</option>
-        </select>
+        <div class="rounded-md p-[1px] border border-border2 active:border-transparent active:bg-gradient-to-r active:from-purple4 active:via-gold active:to-purple2 hover:border-transparent hover:bg-gradient-to-r hover:from-purple4 hover:via-gold hover:to-purple2 transition-all">
+  <select
+    v-model="selectedFactoryId"
+    class=" custom-scroll w-full bg-bg2 rounded-md text-white font-garamond text-[1.05rem] p-[8px_4px]  cursor-pointer "
+  >
+    <option value="">All Factories</option>
+    <option style="border-top:3px solid black;border-bottom:3px solid black"v-for="f in factories" :key="f.id" :value="f.id">{{ f.name }}</option>
+  </select>
+</div>
         <div class="text-text3 text-sm">{{ filteredRecipes.length }} recipe{{ filteredRecipes.length !== 1 ? 's' : '' }}</div>
       </div>
 
-      <div class="flex-1 overflow-y-auto max-h-[calc(100vh-300px)] flex flex-col gap-1.5 pr-1">
+      <div class="custom-scroll flex-1 overflow-y-auto max-h-[calc(100vh-300px)] select-none flex flex-col gap-1.5 pr-1">
         <div
           v-for="r in filteredRecipes"
           :key="r.id"
@@ -90,11 +92,11 @@ function getIconUrl(type: string) {
           @click="selectedRecipeId = r.id"
         >
           <div class="flex-shrink-0">
-            <img v-if="Object.values(r.output)[0]" :src="getIconUrl((Object.values(r.output)[0] as any).type)!" width="28" height="28" class="pixelated" />
+            <img v-if="Object.values(r.output)[0]" :src="getIconUrl((Object.values(r.output)[0] as any).type)!" width="28" height="28" class=" select-none pixelated" />
           </div>
           <div class="min-w-0">
-            <div class="text-white text-[1rem] whitespace-nowrap overflow-hidden text-ellipsis">{{ r.name }}</div>
-            <div class="text-text3 text-[0.8rem] font-cinzel tracking-[0.03em]">
+            <div class="  select-none text-white text-[1rem] whitespace-nowrap overflow-hidden text-ellipsis">{{ r.name }}</div>
+            <div class="  select-none text-text3 text-[0.8rem] font-cinzel tracking-[0.03em]">
               {{ tn(r.type) }}{{ r.production_time ? ' · ' + fmt(r.production_time) : '' }}
             </div>
           </div>
@@ -103,12 +105,12 @@ function getIconUrl(type: string) {
     </div>
 
     <div v-if="selectedRecipe" class="bg-linear-to-br from-bg2 to-bg3 border border-border rounded-xl p-[28px_32px] sticky top-[100px] self-start">
-      <div class="font-cinzel text-[1.5rem] font-bold bg-linear-to-br from-white to-purple2 bg-clip-text text-transparent mb-1.5">
+      <div class="font-cinzel text-[2.5rem] font-bold bg-linear-to-br from-white to-purple2 bg-clip-text text-transparent mb-1.5">
         {{ selectedRecipe.name }}
       </div>
       <div class="text-[0.93rem] text-text2 mb-[22px] flex gap-4 flex-wrap">
-        <span><strong class="text-gold">{{ tn(selectedRecipe.type) }}</strong></span>
-        <span v-if="selectedRecipe.production_time">Time: <strong class="text-gold">{{ fmt(selectedRecipe.production_time) }}</strong></span>
+        <span><strong class="text-gold " style ="color:var(--color-purple2);background:linear-gradient( 135deg, rgba(109, 40, 217, 0.25) 0%, rgba(155, 89, 182, 0.15) 100% ); border:1px solid var(--color-purple); padding:5px; border-radius:5px">{{ tn(selectedRecipe.type) }}</strong></span>
+        <span v-if="selectedRecipe.production_time"><strong  style ="color: var(--color-gold);background:linear-gradient( 135deg, #f0c04040 0%, #f0c04040 100% ); border:1px solid var(--color-gold); padding:5px; border-radius:5px" class="text-gold">Time: {{ fmt(selectedRecipe.production_time) }}</strong></span>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-start mb-7">
@@ -119,8 +121,8 @@ function getIconUrl(type: string) {
             <span v-if="Object.values(selectedRecipe.input).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
           </div>
         </div>
-        <div class="flex items-center justify-center sm:pt-10 text-[2rem] text-gold filter drop-shadow-[0_0_8px_var(--glow2)]">
-          →
+<div class="flex items-center justify-center sm:pt-10 -ml-15 text-[2rem] text-gold filter drop-shadow-[0_0_8px_var(--glow2)]">
+            →
         </div>
         <div>
           <div class="font-cinzel text-[0.76rem] tracking-[0.1em] text-text3 mb-3 uppercase">Output</div>

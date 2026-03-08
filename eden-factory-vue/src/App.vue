@@ -6,6 +6,7 @@ import FactoryGrid from './components/FactoryGrid.vue';
 import RecipeExplorer from './components/RecipeExplorer.vue';
 import ProductionCalculator from './components/ProductionCalculator.vue';
 import ItemChip from './components/ItemChip.vue';
+import { nextTick } from 'vue';
 
 const config = ref<AppConfig | null>(null);
 const loading = ref(true);
@@ -40,10 +41,11 @@ const selectedFactory = computed(() => {
 
 function selectFactory(id: string) {
   selectedFactoryId.value = id;
-  const el = document.getElementById('factory-detail');
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  nextTick(() => {
+    const el = document.getElementById('factory-detail');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
-
 function closeFactoryDetail() {
   selectedFactoryId.value = null;
 }
@@ -69,10 +71,10 @@ function fmt(t: string | null) {
 
 <template>
   <div class="min-h-screen">
-    <header class="bg-linear-to-b from-[rgba(8,7,18,0.98)] to-[rgba(12,11,20,0.95)] border-b border-border2 p-[20px_28px_16px] sticky top-0 z-[100] backdrop-blur-md shadow-[0_2px_32px_rgba(109,40,217,0.18)]">
-      <div class="max-w-[1440px] mx-auto flex items-center gap-5 flex-wrap">
+    <header class="bg-linear-to-b from-[rgba(8,7,18,0.40)] to-[rgba(12,11,20,0.75)] border-b border-border2 p-[20px_28px_16px] sticky top-0 z-[100] backdrop-blur-md shadow-[0_2px_32px_rgba(109,40,217,0.18)]">
+      <div class="TopBar max-w-[1440px] mx-auto flex items-center gap-5 flex-wrap">
         <div class="logo">
-          EdenMC <span class="font-cinzel text-[0.7rem] font-normal tracking-[0.22em] uppercase text-text3 ml-2.5 text-fill-initial bg-none">Factories</span>
+          EdenMC <div class="font-cinzel text-[0.7rem] font-normal tracking-[0.22em] uppercase text-text3 ml-2.5 text-fill-initial bg-none">Factories</div>
         </div>
         <div class="flex-1 min-w-[200px] max-w-[440px] relative">
           <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-text3 text-[1rem] pointer-events-none">⌕</span>
@@ -80,7 +82,7 @@ function fmt(t: string | null) {
             v-model="globalSearch"
             type="text"
             placeholder="Search factories, recipes, items…"
-            class="w-full bg-bg3 border border-border2 rounded-lg text-white font-garamond text-[1.05rem] p-[9px_16px_9px_42px] outline-none transition-all focus:border-purple2 focus:shadow-[0_0_0_3px_rgba(192,132,232,0.12)] placeholder:text-text3"
+            class="w-full bg-bg2 border border-border2 rounded-lg text-white font-garamond text-[1.05rem] p-[9px_16px_9px_42px] outline-none transition-all focus:bg-4 focus:border-purple2 focus:shadow-[0_0_0_3px_rgba(192,132,232,0.12)] placeholder:text-text3"
           />
         </div>
         <nav class="flex gap-1 flex-wrap">
@@ -131,7 +133,7 @@ function fmt(t: string | null) {
             id="factory-detail"
             class="bg-linear-to-br from-bg2 to-bg3 border border-border2 rounded-xl p-[30px_36px] mb-9 shadow-[0_4px_40px_rgba(109,40,217,0.15)] relative overflow-hidden"
           >
-            <div class="absolute top-0 left-0 right-0 h-[3px] bg-linear-to-r from-purple4 via-purple2 via-gold via-purple2 to-purple4"></div>
+          <div class="absolute top-0 left-0 right-0 h-[3px] bg-linear-to-r from-purple4 via-purple2 via-gold via-purple2 to-purple4"></div>
             <div class="flex items-start justify-between gap-4 mb-6 flex-wrap">
               <div>
                 <div class="font-cinzel text-[1.7rem] font-extrabold bg-linear-to-br from-white to-purple2 bg-clip-text text-transparent">
@@ -217,6 +219,63 @@ function fmt(t: string | null) {
           <ProductionCalculator :config="config" />
         </div>
       </div>
-    </main>
+  <div class="fixed bottom-4 right-4" style="display:flex; gap:15px">
+      <a href="https://edenmc.miraheze.org/wiki/FactoryMod" target="_blank" rel="noopener noreferrer" class="group" >
+
+  <div class="absolute bottom-12 right-0 opacity-0 translate-y-2 pointer-events-none
+        group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200
+        bg-bg3 border border-border2 rounded-lg px-4 py-3
+        text-sm text-text2 shadow-lg backdrop-blur-md w-[220px]">
+
+      <div class="font-cinzel text-[0.85rem] mb-1 text-white">Edenmc Factory Wiki</div>
+      <div class="text-[0.8rem] text-text3">
+        Check out the Edenmc wiki's page on factories for more details
+      </div>
   </div>
+
+  <div class="bg-bg3 border border-border2 rounded-lg px-2 py-2 shadow-lg backdrop-blur-md cursor-pointer">
+    <img
+      src="https://static.wikitide.net/edenmcwiki/0/0f/EdenAppleIcon.png"
+      class="w-7 h-7"
+    />
+  </div>
+
+</a>
+      <div href="https://edenmc.miraheze.org/wiki/FactoryMod" target="_blank" rel="noopener noreferrer" class="group" >
+
+  <div class="absolute bottom-12 right-0 opacity-0 translate-y-2 pointer-events-none
+        group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200
+        bg-bg3 border border-border2 rounded-lg px-4 py-3
+        text-sm text-text2 shadow-lg backdrop-blur-md w-[220px]">
+
+      <div class="font-cinzel text-[0.85rem] mb-1 text-white">Info</div>
+      <div class="text-[0.8rem] text-text3">
+        Created by: <br>
+        <ul>
+        <li>TTastic</li>
+        <li>MrEclipse</li>
+        <li>Overitbynow</li>
+      </ul>
+      </div>
+  </div>
+
+<div
+  class="bg-bg3 border border-border2 rounded-lg px-2 py-2 shadow-lg backdrop-blur-md cursor-pointer"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="w-7 h-7 text-white opacity-25"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <rect x="11" y="10" width="2" height="6" fill="black"/>
+    <circle cx="12" cy="7" r="1" fill="black"/>
+  </svg>
+</div>
+
+</div>
+</div>
+</main>
+</div>
 </template>
