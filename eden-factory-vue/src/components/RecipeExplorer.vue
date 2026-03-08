@@ -6,16 +6,19 @@ import ItemChip from './ItemChip.vue';
 
 const props = defineProps<{
   config: AppConfig;
-  initialSearch?: string;
+  search: string;
+}>();
+
+const emit = defineEmits<{
+  (e: 'update:search', val: string): void;
 }>();
 
 const selectedFactoryId = ref('');
-const search = ref(props.initialSearch || '');
 const selectedRecipeId = ref<string | null>(null);
 
 watch(selectedFactoryId, (newVal) => {
   if (newVal !== null) {
-    search.value = ''; // Clear search when factory changes
+    emit('update:search', ''); // Clear global search when factory changes
   }
 });
 
@@ -27,7 +30,7 @@ const recipesByFactory = computed(() => {
 });
 
 const filteredRecipes = computed(() => {
-  const fl = search.value.toLowerCase();
+  const fl = props.search.toLowerCase();
   return recipesByFactory.value
     .map(id => props.config.recipes[id])
     .filter((r): r is Recipe => {
@@ -44,6 +47,13 @@ const selectedRecipe = computed(() => {
 
 const factories = computed(() => {
   return Object.values(props.config.factories).sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const recipeFactories = computed(() => {
+  if (!selectedRecipe.value) return [];
+  return Object.values(props.config.factories).filter(f => 
+    f.recipes.includes(selectedRecipe.value!.id)
+  );
 });
 
 function tn(t: string) {
@@ -67,6 +77,11 @@ function fmt(t: string | null) {
 function getIconUrl(type: string) {
   return getWikiUrl(type);
 }
+
+function selectRecipe(rid: string) {
+  selectedRecipeId.value = rid;
+  emit('update:search', ''); // Clear global search when recipe is clicked
+}
 </script>
 
 <template>
@@ -89,7 +104,7 @@ function getIconUrl(type: string) {
           :key="r.id"
           class="bg-bg2 border border-border rounded-lg p-3 cursor-pointer transition-all duration-150 flex items-center gap-2.5 hover:border-border2 hover:bg-bg3"
           :class="{ 'border-purple2 bg-purple/12': selectedRecipeId === r.id }"
-          @click="selectedRecipeId = r.id; search = '';"
+          @click="selectRecipe(r.id)"
         >
           <div class="flex-shrink-0">
             <img v-if="Object.values(r.output)[0]" :src="getIconUrl((Object.values(r.output)[0] as any).type)!" width="28" height="28" class="pixelated" />
@@ -107,6 +122,11 @@ function getIconUrl(type: string) {
     <div v-if="selectedRecipe" class="bg-linear-to-br from-bg2 to-bg3 border border-border rounded-xl p-[28px_32px] sticky top-[100px] self-start">
       <div class="font-cinzel text-[1.5rem] font-bold bg-linear-to-br from-white to-purple2 bg-clip-text text-transparent mb-1.5">
         {{ selectedRecipe.name }}
+      </div>
+      <div v-if="recipeFactories.length > 0" class="flex flex-wrap gap-2 mb-3">
+        <span v-for="f in recipeFactories" :key="f.id" class="text-[0.75rem] font-cinzel bg-bg4 border border-border2 text-text2 px-2 py-0.5 rounded">
+          {{ f.name }}
+        </span>
       </div>
       <div class="text-[0.93rem] text-text2 mb-[22px] flex gap-4 flex-wrap">
         <span><strong class="text-gold">{{ tn(selectedRecipe.type) }}</strong></span>
@@ -127,7 +147,7 @@ function getIconUrl(type: string) {
         <div>
           <div class="font-cinzel text-[0.76rem] tracking-[0.1em] text-text3 mb-3 uppercase">Output</div>
           <div class="flex flex-wrap gap-2.5">
-            <ItemChip v-for="o in Object.values(selectedRecipe.output)" :key="(o as any).type" :item="(o as any)" />
+            <ItemChip v-for="(o, key) in selectedRecipe.output" :key="key" :item="(o as any)" />
             <span v-if="Object.values(selectedRecipe.output).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
           </div>
         </div>

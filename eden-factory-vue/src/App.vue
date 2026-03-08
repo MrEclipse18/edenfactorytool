@@ -210,7 +210,7 @@ function fmt(t: string | null) {
 
         <!-- RECIPES PANEL -->
         <div v-if="activePanel === 'recipes'">
-          <RecipeExplorer :config="config" :initial-search="globalSearch" />
+          <RecipeExplorer :config="config" v-model:search="globalSearch" />
         </div>
 
         <!-- CALCULATOR PANEL -->

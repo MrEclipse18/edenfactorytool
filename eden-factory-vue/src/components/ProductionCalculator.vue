@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import type { AppConfig, ConfigItem } from '../types';
 import { getWikiUrl } from '../utils/wikiIcons';
 import ItemChip from './ItemChip.vue';
@@ -14,6 +14,7 @@ const selectedFactoryId = ref<string | null>(null);
 const selectedRecipeId = ref<string | null>(null);
 const targetQuantity = ref(64);
 const selectedOutputItem = ref('');
+const calculateSection = ref<HTMLElement | null>(null);
 
 const searchResults = computed(() => {
   const fl = props.filter.toLowerCase();
@@ -44,42 +45,58 @@ const currentRecipe = computed(() => {
   return props.config.recipes[selectedRecipeId.value];
 });
 
+const recipeFactories = computed(() => {
+  if (!currentRecipe.value) return [];
+  return Object.values(props.config.factories).filter(f => 
+    f.recipes.includes(currentRecipe.value!.id)
+  );
+});
+
 function selectFactory(id: string) {
   selectedFactoryId.value = id;
   step.value = 2;
 }
 
-function selectRecipe(id: string) {
+async function selectRecipe(id: string) {
   selectedRecipeId.value = id;
   const r = props.config.recipes[id];
   if (r) {
-    const outputs = Object.values(r.output);
-    if (outputs.length > 0 && outputs[0]) {
-      selectedOutputItem.value = outputs[0].type;
+    const outputKeys = Object.keys(r.output);
+    if (outputKeys.length > 0) {
+      selectedOutputItem.value = outputKeys[0] || '';
     }
   }
   step.value = 3;
+  
+  await nextTick();
+  if (calculateSection.value) {
+    calculateSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 const calculationResults = computed(() => {
   if (!currentRecipe.value) return null;
-  const outputs = Object.values(currentRecipe.value.output);
-  const targetItem = outputs.find(o => o && o.type === selectedOutputItem.value) || outputs[0];
+  const targetItem = currentRecipe.value.output[selectedOutputItem.value] || Object.values(currentRecipe.value.output)[0];
   if (!targetItem) return null;
 
-  const runs = Math.ceil(targetQuantity.value / (targetItem as ConfigItem).amount);
+  const item = targetItem as ConfigItem;
+  const effectiveAmount = item.amount * (item.chance || 1);
+  const runs = Math.ceil(targetQuantity.value / effectiveAmount);
+
   const inputsNeeded = Object.values(currentRecipe.value.input).map(i => {
-    const item = i as ConfigItem;
+    const inputItem = i as ConfigItem;
     return {
-      ...item,
-      total: item.amount * runs
+      ...inputItem,
+      total: inputItem.amount * runs
     };
   });
-  const outputsGained = Object.values(currentRecipe.value.output).map(o => {
-    const item = o as ConfigItem;
+  const outputsGained = Object.entries(currentRecipe.value.output).map(([key, o]) => {
+    const outputItem = o as ConfigItem;
     return {
-      ...item,
-      total: item.amount * runs
+      ...outputItem,
+      key,
+      total: outputItem.amount * runs,
+      expected: outputItem.amount * (outputItem.chance || 1) * runs
     };
   });
 
@@ -126,6 +143,11 @@ function getIconUrl(type: string) {
 function idn(item: any) {
   return item.display_name || item.type.split('_').map((w: string) => (w[0] ? w[0].toUpperCase() : '') + w.slice(1).toLowerCase()).join(' ');
 }
+
+const formatChance = (c: number) => {
+  const p = c * 100;
+  return p >= 1 ? p.toFixed(1) : p.toPrecision(2);
+};
 </script>
 
 <template>
@@ -202,7 +224,7 @@ function idn(item: any) {
     </template>
 
     <!-- Step 3: Set quantity + results (Always visible if a recipe is selected, even if searching) -->
-    <div v-if="step === 3 && currentRecipe">
+    <div v-if="step === 3 && currentRecipe" ref="calculateSection">
       <div style = "display:flex;justify-content: space-between"class="font-cinzel text-[0.95rem] font-semibold text-gold tracking-[0.06em] mb-4 flex items-center gap-4">
         Step 3 — Calculate
         <button v-if="!filter" class="bg-transparent border border-border2 text-text3 font-cinzel text-[0.72rem] tracking-[0.05em] py-1 px-3 rounded-sm cursor-pointer transition-all hover:border-purple2 hover:text-purple2" @click="step = 2">
@@ -215,6 +237,11 @@ function idn(item: any) {
 
         <div class="font-cinzel text-[1.3rem] font-bold bg-linear-to-br from-white to-purple2 bg-clip-text text-transparent mb-1.5">
           {{ currentRecipe.name }}
+        </div>
+        <div v-if="recipeFactories.length > 0" class="flex flex-wrap gap-2 mb-4">
+          <span v-for="f in recipeFactories" :key="f.id" class="text-[0.7rem] font-cinzel bg-bg4 border border-border2 text-text2 px-2 py-0.5 rounded">
+            {{ f.name }}
+          </span>
         </div>
         <div class="text-[0.9rem] text-text2 mb-6 flex gap-3.5 flex-wrap">
           <span><strong class="text-gold">{{ tn(currentRecipe.type) }}</strong></span>
@@ -253,8 +280,8 @@ function idn(item: any) {
             v-model="selectedOutputItem"
             class="h-13 bg-bg border border-border2 rounded-md text-white font-garamond text-[1.05rem] text-left p-[10px_14px] outline-none cursor-pointer"
           >
-            <option v-for="o in Object.values(currentRecipe.output)" :key="o.type" :value="o.type">
-              {{ idn(o) }}
+            <option v-for="(o, key) in currentRecipe.output" :key="key" :value="key">
+              {{ idn(o) }} {{ (o as any).chance ? '(' + formatChance((o as any).chance) + '%)' : '' }}
             </option>
           </select>
         </div>
@@ -267,15 +294,18 @@ function idn(item: any) {
             <span class="text-gold2 font-semibold text-[1.05rem]">{{ calculationResults.runs.toLocaleString() }}</span>
           </div>
 
-          <div class="font-cinzel text-[0.75rem] tracking-[0.09em] text-text3 uppercase mb-2.5 mt-4">You will get</div>
-          <div v-for="o in calculationResults.outputsGained" :key="o.type" class="flex justify-between items-center py-2 border-b border-border/60 text-[1rem]">
+          <div class="font-cinzel text-[0.75rem] tracking-[0.09em] text-text3 uppercase mb-2.5 mt-4">You will get (Estimated)</div>
+          <div v-for="o in calculationResults.outputsGained" :key="o.key" class="flex justify-between items-center py-2 border-b border-border/60 text-[1rem]">
             <span class="flex items-center gap-2.5 text-text">
               <img v-if="getIconUrl(o.type)" :src="getIconUrl(o.type)!" width="26" height="26" class="pixelated" />
               {{ idn(o) }}
+              <span v-if="o.chance !== undefined" class="text-[0.7rem] bg-purple/20 text-purple2 px-1.5 py-0.5 rounded border border-purple/30 font-cinzel">
+                {{ formatChance(o.chance) }}%
+              </span>
             </span>
             <span>
-              <span class="text-gold2 font-semibold text-[1.05rem]">{{ o.total.toLocaleString() }}</span>
-              <span class="text-text3 text-[0.84rem] ml-1"> ({{ o.amount }}×{{ calculationResults.runs }})</span>
+              <span class="text-gold2 font-semibold text-[1.05rem]">{{ Math.round(o.expected || o.total).toLocaleString() }}</span>
+              <span class="text-text3 text-[0.84rem] ml-1"> ({{ o.amount }}×{{ (o.chance || 1).toFixed(2) }}×{{ calculationResults.runs }})</span>
             </span>
           </div>
 

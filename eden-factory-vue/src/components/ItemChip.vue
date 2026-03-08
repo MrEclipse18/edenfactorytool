@@ -18,6 +18,10 @@ const displayName = computed(() => {
 });
 
 const fallbackEmoji = computed(() => FB[props.item.type] || '❓');
+const formatChance = (c: number) => {
+  const p = c * 100;
+  return p >= 1 ? p.toFixed(1) : p.toPrecision(2);
+};
 </script>
 
 <template>
@@ -42,7 +46,12 @@ const fallbackEmoji = computed(() => FB[props.item.type] || '❓');
       </span>
     </div>
     <div class="item-info">
-      <div class="text-white text-[1.05rem] leading-tight">{{ displayName }}</div>
+      <div class="text-white text-[1.05rem] leading-tight flex items-center gap-2">
+        {{ displayName }}
+        <span v-if="item.chance !== undefined" class="text-[0.7rem] bg-purple/20 text-purple2 px-1.5 py-0.5 rounded border border-purple/30 font-cinzel">
+          {{ formatChance(item.chance) }}%
+        </span>
+      </div>
       <div class="text-gold font-semibold text-[1rem]">×{{ item.amount.toLocaleString() }}</div>
       <div v-if="item.display_name" class="text-text3 text-[0.8rem]">{{ item.type }}</div>
     </div>

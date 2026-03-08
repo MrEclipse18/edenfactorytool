@@ -5,10 +5,22 @@ function parseItemStack(obj: any): ConfigItem {
   let type = 'UNKNOWN';
   let amount = 1;
   let display_name: string | null = null;
+  let chance: number | undefined = undefined;
 
   if (typeof obj === 'string') {
     type = obj;
   } else if (obj && typeof obj === 'object') {
+    // Handle chance wrappers: { chance: 0.5, some_key: { type: ... } }
+    if (obj.chance !== undefined) {
+      chance = obj.chance;
+      // The actual item is usually the other key in this object
+      const otherKey = Object.keys(obj).find(k => k !== 'chance');
+      if (otherKey && typeof obj[otherKey] === 'object') {
+        const inner = parseItemStack(obj[otherKey]);
+        return { ...inner, chance };
+      }
+    }
+
     // If it's a map where values are item stacks (common in this config)
     // and we don't have a 'type' directly on this object, but it has one child which is an object
     const keys = Object.keys(obj);
@@ -26,7 +38,7 @@ function parseItemStack(obj: any): ConfigItem {
     }
   }
 
-  return { type, amount, display_name };
+  return { type, amount, display_name, ...(chance !== undefined ? { chance } : {}) };
 }
 
 export function parseConfig(yamlText: string): AppConfig {
@@ -65,8 +77,10 @@ export function parseConfig(yamlText: string): AppConfig {
       }
 
       const output: Record<string, ConfigItem> = {};
-      if (r.output) {
-        for (const [name, item] of Object.entries(r.output)) {
+      const outputData = r.output || r.outputs;
+      if (outputData) {
+        for (const [name, item] of Object.entries(outputData)) {
+          if (name === 'display') continue;
           output[name] = parseItemStack(item);
         }
       }

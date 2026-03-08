@@ -2,6 +2,7 @@ export interface ConfigItem {
   type: string;
   amount: number;
   display_name: string | null;
+  chance?: number;
 }
 
 export interface Factory {
