@@ -15641,7 +15641,6 @@ recipes:
     production_time: 4s
     name: Make Steel Pickaxe
     type: RANDOM
-    production_time: 4s
     fuel_consumption_intervall: 4s
     input:
       steel_ingot:
