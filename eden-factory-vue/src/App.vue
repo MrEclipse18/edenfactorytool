@@ -41,11 +41,11 @@ const selectedFactory = computed(() => {
 
 function selectFactory(id: string) {
   selectedFactoryId.value = id;
-  nextTick(() => {
-    const el = document.getElementById('factory-detail');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  globalSearch.value = ''; // Clear search bar after selecting a factory
+  const el = document.getElementById('factory-detail');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
 function closeFactoryDetail() {
   selectedFactoryId.value = null;
 }
@@ -87,27 +87,26 @@ function fmt(t: string | null) {
         </div>
         <nav class="flex gap-1 flex-wrap">
           <button
-            class="nav-btn"
-            :class="{ 'active': activePanel === 'factories' }"
-            @click="activePanel = 'factories'"
+          class="nav-btn"
+          :class="{ 'active': activePanel === 'factories' }"
+          @click="activePanel = 'factories'; globalSearch = ''"
           >
-            Factories
+          Factories
           </button>
           <button
-            class="nav-btn"
-            :class="{ 'active': activePanel === 'recipes' }"
-            @click="activePanel = 'recipes'"
+          class="nav-btn"
+          :class="{ 'active': activePanel === 'recipes' }"
+          @click="activePanel = 'recipes'; globalSearch = ''"
           >
-            Recipes
+          Recipes
           </button>
           <button
-            class="nav-btn"
-            :class="{ 'active': activePanel === 'calculator' }"
-            @click="activePanel = 'calculator'"
+          class="nav-btn"
+          :class="{ 'active': activePanel === 'calculator' }"
+          @click="activePanel = 'calculator'; globalSearch = ''"
           >
-            Calculator
-          </button>
-        </nav>
+          Calculator
+          </button>        </nav>
       </div>
     </header>
 
