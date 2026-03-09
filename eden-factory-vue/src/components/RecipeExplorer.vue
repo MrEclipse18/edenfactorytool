@@ -25,7 +25,7 @@ function toggleType(type: string) {
 }
 watch(selectedFactoryId, (newVal) => {
   if (newVal !== null) {
-    emit('update:search', ''); // Clear global search when factory changes
+    // emit('update:search', ''); // Clear global search when factory changes 
   }
 });
 
@@ -100,7 +100,7 @@ function getRecipeFactoryNames(recipeId: string): string {
 
 function selectRecipe(rid: string) {
   selectedRecipeId.value = rid;
-  emit('update:search', ''); // Clear global search when recipe is clicked
+  // emit('update:search', ''); // Clear global search when recipe is clicked
 }
 const recipeTypes = computed(() => {
   const allowed = ['PRODUCTION','REPAIR','UPGRADE','RANDOM']
@@ -180,9 +180,16 @@ const recipeTypes = computed(() => {
         <div>
           <div class="font-cinzel text-[0.76rem] tracking-[0.1em] text-text3 mb-3 uppercase">Inputs</div>
           <div class="flex flex-wrap gap-2.5">
-            <ItemChip v-for="i in Object.values(selectedRecipe.input)" :key="(i as any).type" :item="(i as any)" />
-            <span v-if="Object.values(selectedRecipe.input).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
-          </div>
+  <span
+    v-for="i in Object.values(selectedRecipe.input)"
+    :key="i.type"
+    class="inline-block cursor-pointer"
+    @click="emit('update:search', i.type!)"
+  >
+    <ItemChip :item="i" />
+  </span>
+  <span v-if="Object.values(selectedRecipe.input).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
+</div>
         </div>
         <div class="flex items-center justify-center sm:pt-10 text-[2rem] text-gold filter drop-shadow-[0_0_8px_var(--glow2)]">
           →
@@ -190,9 +197,16 @@ const recipeTypes = computed(() => {
         <div>
           <div class="font-cinzel text-[0.76rem] tracking-[0.1em] text-text3 mb-3 uppercase">Output</div>
           <div class="flex flex-wrap gap-2.5">
-            <ItemChip v-for="(o, key) in selectedRecipe.output" :key="key" :item="(o as any)" />
-            <span v-if="Object.values(selectedRecipe.output).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
-          </div>
+  <span
+    v-for="(o, key) in selectedRecipe.output"
+    :key="key"
+    class="inline-block cursor-pointer"
+    @click="emit('update:search', o.type!)"
+  >
+    <ItemChip :item="o" />
+  </span>
+  <span v-if="Object.values(selectedRecipe.output).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
+</div>
         </div>
       </div>
     </div>
