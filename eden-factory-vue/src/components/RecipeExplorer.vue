@@ -12,10 +12,17 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:search', val: string): void;
 }>();
+const hiddenTypes = ref<string[]>([]);
 
 const selectedFactoryId = ref('');
 const selectedRecipeId = ref<string | null>(null);
-
+function toggleType(type: string) {
+  if (hiddenTypes.value.includes(type)) {
+    hiddenTypes.value = hiddenTypes.value.filter(t => t !== type);
+  } else {
+    hiddenTypes.value.push(type);
+  }
+}
 watch(selectedFactoryId, (newVal) => {
   if (newVal !== null) {
     emit('update:search', ''); // Clear global search when factory changes
@@ -31,15 +38,18 @@ const recipesByFactory = computed(() => {
 
 const filteredRecipes = computed(() => {
   const fl = props.search.toLowerCase();
+  const allowed = ['PRODUCTION','REPAIR','UPGRADE','RANDOM'];
+
   return recipesByFactory.value
     .map(id => props.config.recipes[id])
     .filter((r): r is Recipe => {
       if (!r) return false;
+      const type = allowed.includes(r.type) ? r.type : 'MISC';
+      if (hiddenTypes.value.includes(type)) return false;
       if (!fl) return true;
       return r.name.toLowerCase().includes(fl) || r.id.toLowerCase().includes(fl);
     });
 });
-
 const selectedRecipe = computed(() => {
   if (!selectedRecipeId.value) return filteredRecipes.value[0] || null;
   return props.config.recipes[selectedRecipeId.value] || filteredRecipes.value[0] || null;
@@ -92,6 +102,14 @@ function selectRecipe(rid: string) {
   selectedRecipeId.value = rid;
   emit('update:search', ''); // Clear global search when recipe is clicked
 }
+const recipeTypes = computed(() => {
+  const allowed = ['PRODUCTION','REPAIR','UPGRADE','RANDOM']
+
+  return Object.values(props.config.recipes)
+    .filter(Boolean)
+    .map(r => allowed.includes(r.type) ? r.type : 'MISC')
+    .filter((v, i, a) => a.indexOf(v) === i)
+})
 </script>
 
 <template>
@@ -105,6 +123,21 @@ function selectRecipe(rid: string) {
           <option value="">All Factories</option>
           <option v-for="f in factories" :key="f.id" :value="f.id">{{ f.name }}</option>
         </select>
+            <div class="mb-4   flex flex-wrap gap-3 justify-center h-[100%]">
+      <button
+  v-for="type in recipeTypes"
+  :key="type"
+  @click="toggleType(type)"
+  :class="[
+    'px-3 h-[70%] py-1 max-w-[110px] max-h-[35px] rounded-md border font-semibold text-sm transition-all duration-300 ease-in-out',
+    hiddenTypes.includes(type)
+      ? 'bg-bg text-white border-[var(--color-purple4)]'
+      : 'bg-bg3 text-[var(--color-purple2)] border-[var(--color-purple2)]'
+  ]"
+>
+    {{ type }}
+    </button>
+</div>
         <div class="text-text3 text-sm">{{ filteredRecipes.length }} recipe{{ filteredRecipes.length !== 1 ? 's' : '' }}</div>
       </div>
 

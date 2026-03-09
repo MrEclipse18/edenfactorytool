@@ -75,7 +75,7 @@ function getEmoji(type: string) {
       {{ filter ? `Results — ${filteredFactories.length} factories` : 'All Factories' }}
     </div>
     <div style="display:flex; height:50px;gap:30px; justify-content:space-between">
-     <select v-model="filterOptions" class="custom-scroll transition-all duration-300 ease-in-out h-[90%] hover:border-[var(--color-purple2)] border-2 border-[var(--color-purple4)] mb-10 p-[10px] bg-bg3 rounded-md max-w-[200px] text-white font-garamond text-[1.05rem] cursor-pointer">
+     <select v-model="filterOptions" class="custom-scroll transition-all duration-300 ease-in-out h-[74%] hover:border-[var(--color-purple2)] border-2 border-[var(--color-purple4)] mb-10 p-[6px] bg-bg3 rounded-md max-w-[200px] text-white font-garamond text-[1.05rem] cursor-pointer">
   <option value="A-Z">A-Z</option>
   <option value="Z-A">Z-A</option>
   <option value="Citadel Hardness">Citadel Hardness</option>
