@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { parseConfig } from './utils/yamlParser';
+
 import type { AppConfig } from './types';
 import FactoryGrid from './components/FactoryGrid.vue';
 import RecipeExplorer from './components/RecipeExplorer.vue';
@@ -19,13 +20,18 @@ onMounted(async () => {
   try {
     console.log('Fetching configuration...');
     const response = await fetch('/factorymodconfig.yml');
+    const responseTags = await fetch('/factorymodtags.yml');
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodconfig.yml)`);
+    }else if(!responseTags.ok) {
+      throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodtags.yml)`);
     }
     const yamlText = await response.text();
+    const yamlTextTag = await responseTags.text();
     console.log('Parsing configuration...');
     config.value = parseConfig(yamlText);
     console.log('Configuration loaded successfully.');
+
   } catch (e: any) {
     console.error('Failed to load configuration:', e);
     error.value = e.message || String(e);

@@ -4,6 +4,9 @@ export interface ConfigItem {
   display_name: string | null;
   chance?: number;
   is_compacted?: boolean;
+    meta?: {
+    lore?: string[];
+  };
 }
 
 export interface Factory {
@@ -25,7 +28,9 @@ export interface Recipe {
   output: Record<string, ConfigItem>;
 }
 
+
 export interface AppConfig {
   factories: Record<string, Factory>;
   recipes: Record<string, Recipe>;
 }
+

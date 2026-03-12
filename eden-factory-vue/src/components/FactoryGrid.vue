@@ -1,19 +1,30 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed,onMounted } from 'vue';
 import type { AppConfig } from '../types';
+
 import { getWikiUrl, FB } from '../utils/wikiIcons';
 const hiddenTypes = ref<string[]>([]);
+
 
 const props = defineProps<{
   config: AppConfig;
   filter: string;
   selectedFactoryId: string | null;
 }>();
-
 const emit = defineEmits<{
   (e: 'select', id: string): void;
 }>();
 
+onMounted(async () => {
+  try {
+    const responseTags = await fetch('/factorymodtags.yml');
+    const yamlTextTag = await responseTags.text();
+
+  }  catch (e: any) {
+    console.error('Failed to load configuration:', e);
+  } finally {
+  }
+});
 // <-- define reactive state for the dropdown
 const filterOptions = ref<'A-Z' | 'Z-A' | 'Citadel Hardness' | 'Recipe Count' | 'Unique Items' | 'Unique Items L-H'>('A-Z');
 
@@ -111,6 +122,8 @@ function getEmoji(type: string) {
           class="absolute top-0 left-0 right-0 h-[2px] bg-linear-to-r from-purple4 via-gold to-purple2 opacity-0 transition-opacity duration-180 group-hover:opacity-100"
           :class="{ 'opacity-100': selectedFactoryId === factory.id }"
         ></div>
+
+        
         <div class="factoryNameFlex">
         <div class="font-cinzel text-[1.2rem] font-semibold text-white mb-[7px]">{{ factory.name }}</div>
 
@@ -131,7 +144,11 @@ function getEmoji(type: string) {
         <div class="text-[0.9rem] text-text3 mt-[6px]">
           {{ factory.recipes.length }} recipe{{ factory.recipes.length !== 1 ? 's' : '' }}
         </div>
+        <div class="flex gap-2">
+
+</div>
       </div>
+      
     </div>
   </div>
 </template>

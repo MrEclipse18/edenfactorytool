@@ -8,7 +8,9 @@ const props = defineProps<{
   item: ConfigItem;
   size?: number;
 }>();
-
+const lore = computed(() => {
+  return props.item.meta?.lore ?? [];
+});
 const imgSize = props.size || 40;
 const wikiUrl = computed(() => getWikiUrl(props.item.type));
 const imgError = ref(false);
@@ -66,6 +68,11 @@ const fullAmount = computed(() => props.item.is_compacted ? props.item.amount * 
         </span>
       </div>
       <div v-if="item.display_name" class="text-text3 text-[0.8rem]">{{ item.type }}</div>
+      <div v-if="lore.length" class="text-text3 text-[0.75rem] italic mt-1">
+  <div v-for="line in lore" :key="line">
+    {{ line }}
+  </div>
+</div>
     </div>
   </div>
 </template>

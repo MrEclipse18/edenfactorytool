@@ -47,7 +47,8 @@ const filteredRecipes = computed(() => {
       const type = allowed.includes(r.type) ? r.type : 'MISC';
       if (hiddenTypes.value.includes(type)) return false;
       if (!fl) return true;
-      return r.name.toLowerCase().includes(fl) || r.id.toLowerCase().includes(fl);
+      return   r.name.toLowerCase().includes(fl) ||Object.values(r.input).some(i =>i.type?.toLowerCase().includes(fl)) ||Object.values(r.output).some(i =>i.type?.toLowerCase().includes(fl))||
+  r.id.toLowerCase().includes(fl)
     });
 });
 const selectedRecipe = computed(() => {
@@ -123,7 +124,7 @@ const recipeTypes = computed(() => {
           <option value="">All Factories</option>
           <option v-for="f in factories" :key="f.id" :value="f.id">{{ f.name }}</option>
         </select>
-            <div class="mb-4   flex flex-wrap gap-3 justify-center h-[100%]">
+            <div class="mb-4   flex flex-wrap gap-3 justify-left h-[100%]">
       <button
   v-for="type in recipeTypes"
   :key="type"
