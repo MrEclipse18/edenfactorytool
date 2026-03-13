@@ -7,6 +7,8 @@ import ItemChip from './ItemChip.vue';
 const props = defineProps<{
   config: AppConfig;
   search: string;
+    recipeSearch: string | null;
+
 }>();
 
 const emit = defineEmits<{
@@ -47,8 +49,20 @@ const filteredRecipes = computed(() => {
       const type = allowed.includes(r.type) ? r.type : 'MISC';
       if (hiddenTypes.value.includes(type)) return false;
       if (!fl) return true;
-      return   r.name.toLowerCase().includes(fl) ||Object.values(r.input).some(i =>i.type?.toLowerCase().includes(fl)) ||Object.values(r.output).some(i =>i.type?.toLowerCase().includes(fl))||
+      // Filter By Input/Output/Name
+      if(props.recipeSearch == "All") {
+        return r.name.toLowerCase().includes(fl) ||Object.values(r.input).some(i =>i.type?.toLowerCase().includes(fl)) ||Object.values(r.output).some(i =>i.type?.toLowerCase().includes(fl))||
   r.id.toLowerCase().includes(fl)
+      } else if(props.recipeSearch =="Input") {
+        return Object.values(r.input).some(i =>i.type?.toLowerCase().includes(fl))
+      } else if(props.recipeSearch == "Output") {
+        return Object.values(r.output).some(i =>i.type?.toLowerCase().includes(fl))
+      } else if(props.recipeSearch =="Name") {
+         return   r.name.toLowerCase().includes(fl) ||   r.id.toLowerCase().includes(fl)
+
+      } else {
+                 return  r.name.toLowerCase().includes(fl);
+      }
     });
 });
 const selectedRecipe = computed(() => {

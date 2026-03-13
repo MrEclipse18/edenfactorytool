@@ -25,7 +25,7 @@ const searchResults = computed(() => {
     if (r.name.toLowerCase().includes(fl) || r.id.toLowerCase().includes(fl)) return true;
     return [...Object.values(r.input), ...Object.values(r.output)].some(i => {
       const displayName = i.display_name || i.type.split('_').map(w => (w[0] ? w[0].toUpperCase() : '') + w.slice(1).toLowerCase()).join(' ');
-      return displayName.toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl);
+      return displayName.toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl);
     });
   });
 });

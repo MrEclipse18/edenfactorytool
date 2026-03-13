@@ -14,6 +14,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const activePanel = ref('factories');
 const globalSearch = ref('');
+const recipeSearch = ref('All');
 const selectedFactoryId = ref<string | null>(null);
 
 onMounted(async () => {
@@ -47,7 +48,7 @@ const selectedFactory = computed(() => {
 
 function selectFactory(id: string) {
   selectedFactoryId.value = id;
-  globalSearch.value = ''; // Clear search bar after selecting a factory
+  // globalSearch.value = ''; // Clear search bar after selecting a factory
   const el = document.getElementById('factory-detail');
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -82,15 +83,28 @@ function fmt(t: string | null) {
         <div class="logo">
           EdenMC <div class="font-cinzel text-[0.7rem] font-normal tracking-[0.22em] uppercase text-text3 ml-2.5 text-fill-initial bg-none">Factories</div>
         </div>
-        <div class="flex-1 min-w-[200px] max-w-[440px] relative">
-          <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-text3 text-[1rem] pointer-events-none">⌕</span>
-          <input
-            v-model="globalSearch"
-            type="text"
-            placeholder="Search factories, recipes, items…"
-            class="w-full bg-bg2 border border-border2 rounded-lg text-white font-garamond text-[1.05rem] p-[9px_16px_9px_42px] outline-none transition-all focus:bg-4 focus:border-purple2 focus:shadow-[0_0_0_3px_rgba(192,132,232,0.12)] placeholder:text-text3"
-          />
-        </div>
+<div class="flex-1 min-w-[200px] max-w-[440px] relative">
+  <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-text3 text-[1rem] pointer-events-none">
+    ⌕
+  </span>
+  <select
+  v-model="recipeSearch"
+  v-if="activePanel == 'recipes'"
+  class="absolute right-[8px] w-[20%] top-1/2 -translate-y-1/2 h-[70%] bg-bg3 border transition-all duration-200 focus:border-purple2 border-purple4 hover:border-purple2 rounded-md text-white font-garamond text-[0.9rem] cursor-pointer px-2"
+>
+    <option value="All">All</option>
+    <option value="Input">Input</option>
+    <option value="Output">Output</option>
+    <option value="Name">Name</option>
+  </select>
+  <input
+    v-model="globalSearch"
+    type="text"
+    placeholder="Search factories, recipes, items…"
+    class="w-full bg-bg2 border border-border2 rounded-lg text-white font-garamond text-[1.05rem] p-[9px_120px_9px_42px] outline-none transition-all focus:bg-4 focus:border-purple2 focus:shadow-[0_0_0_3px_rgba(192,132,232,0.12)] placeholder:text-text3"
+  />
+  
+</div>
         <nav class="flex gap-1 flex-wrap">
           <button
           class="nav-btn"
@@ -172,7 +186,7 @@ function fmt(t: string | null) {
             <div v-if="Object.keys(selectedFactory.setupcost).length > 0">
               <div class="section-title">Setup Cost</div>
               <div class="flex flex-wrap gap-2.5 mb-7">
-                <ItemChip v-for="item in Object.values(selectedFactory.setupcost)" :key="item.type" :item="item" />
+                <ItemChip class="cursor-pointer"v-for="item in Object.values(selectedFactory.setupcost)" :key="item.type" :item="item"   @click="activePanel = 'recipes'; globalSearch = item.type ?? '' "/>
               </div>
             </div>
 
@@ -192,12 +206,12 @@ function fmt(t: string | null) {
               <div
                 v-for="rid in selectedFactory.recipes"
                 :key="rid"
-                class="bg-bg4 border border-border rounded-lg p-[12px_16px] cursor-pointer transition-all duration-150 hover:border-purple2 hover:bg-purple/10 hover:shadow-[0_2px_12px_var(--glow)]"
+                class=" bg-bg4 border border-border rounded-lg p-[12px_16px] cursor-pointer transition-all duration-150 hover:border-purple2 hover:bg-purple/10 hover:shadow-[0_2px_12px_var(--glow)]"
                 @click="activePanel = 'recipes'; globalSearch = rid"
               >
                 <template v-if="config.recipes[rid]">
-                  <div class="text-[1rem] text-white mb-[3px]">{{ config.recipes[rid].name }}</div>
-                  <div class="text-[0.82rem] text-text3 font-cinzel tracking-[0.03em]">
+                  <div class="cursor-pointer text-[1rem] text-white mb-[3px]">{{ config.recipes[rid].name }}</div>
+                  <div class="cursor-pointer text-[0.82rem] text-text3 font-cinzel tracking-[0.03em]">
                     {{ tn(config.recipes[rid].type) }}{{ config.recipes[rid].production_time ? ' · ' + fmt(config.recipes[rid].production_time) : '' }}
                   </div>
                 </template>
@@ -210,13 +224,14 @@ function fmt(t: string | null) {
             :config="config"
             :filter="globalSearch"
             :selected-factory-id="selectedFactoryId"
+            
             @select="selectFactory"
           />
         </div>
 
         <!-- RECIPES PANEL -->
         <div v-if="activePanel === 'recipes'">
-          <RecipeExplorer :config="config" v-model:search="globalSearch" />
+          <RecipeExplorer :config="config" :recipe-search="recipeSearch" v-model:search="globalSearch" />
         </div>
 
         <!-- CALCULATOR PANEL -->
