@@ -17,12 +17,12 @@ const emit = defineEmits<{
 
 onMounted(async () => {
   try {
-    const responseTags = await fetch('/factorymodtags.yml');
-    await responseTags.text();
-
+    const responseTags = await fetch('factorymodtags.yml');
+    if (responseTags.ok) {
+      await responseTags.text();
+    }
   }  catch (e: any) {
-    console.error('Failed to load configuration:', e);
-  } finally {
+    console.warn('Failed to load optional tags in FactoryGrid:', e);
   }
 });
 // <-- define reactive state for the dropdown

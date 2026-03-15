@@ -21,15 +21,28 @@ const selectedFactoryId = ref<string | null>(null);
 onMounted(async () => {
   try {
     console.log('Fetching configuration...');
-    const response = await fetch('/factorymodconfig.yml');
-    const responseTags = await fetch('/factorymodtags.yml');
+    // Use relative paths to support subfolder deployments
+    const response = await fetch('factorymodconfig.yml');
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodconfig.yml)`);
-    }else if(!responseTags.ok) {
-      throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodtags.yml)`);
+      throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch factorymodconfig.yml)`);
     }
+    
     const yamlText = await response.text();
-    await responseTags.text(); // Consume the stream even if unused for now to avoid unused var error if keeping fetch
+    
+    // Attempt to fetch tags, but don't crash if they are missing
+    try {
+      const responseTags = await fetch('factorymodtags.yml');
+      if (responseTags.ok) {
+        await responseTags.text();
+        console.log('Tags loaded successfully.');
+      } else {
+        console.warn(`Optional factorymodtags.yml not found (Status ${responseTags.status})`);
+      }
+    } catch (tagErr) {
+      console.warn('Failed to fetch optional tags:', tagErr);
+    }
+
     console.log('Parsing configuration...');
     config.value = parseConfig(yamlText);
     console.log('Configuration loaded successfully.');
