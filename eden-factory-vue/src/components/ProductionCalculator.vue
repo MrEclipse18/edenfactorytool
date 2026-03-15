@@ -158,7 +158,7 @@ const formatChance = (c: number) => {
 <template>
   <div class="max-w-full">
     <!-- Search Results (Visible when filter is active) -->
-    <div v-if="filter">
+    <div v-if="filter"class="mb-8">
       <div class="section-title">Search Results — Recipes & Items</div>
       <div v-if="searchResults.length === 0" class="text-center py-16 text-text3 italic text-[1.1rem]">
         No recipes or items match "{{ filter }}".

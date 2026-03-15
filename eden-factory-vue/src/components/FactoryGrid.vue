@@ -85,8 +85,9 @@ function getEmoji(type: string) {
     <div class="section-title">
       {{ filter ? `Results — ${filteredFactories.length} factories` : 'All Factories' }}
     </div>
-    <div style="display:flex; height:50px;gap:30px; justify-content:space-between">
-     <select v-model="filterOptions" class="custom-scroll transition-all duration-300 ease-in-out h-[74%] hover:border-[var(--color-purple2)] border-2 border-[var(--color-purple4)] mb-10 p-[6px] bg-bg3 rounded-md max-w-[200px] text-white font-garamond text-[1.05rem] cursor-pointer">
+    <div style="display:flex;height:50px;gap:30px; justify-content:space-between">
+     <select v-model="filterOptions"  class="h-[74%] w-[220px] max-w-[30%] border-2 transition-all duration-300 focus:border-purple2 hover:border-purple2 border-[var(--color-purple4)] mb-10 p-[6px] bg-bg3 rounded-md text-white font-garamond text-[1.05rem] cursor-pointer"
+>
   <option value="A-Z">A-Z</option>
   <option value="Z-A">Z-A</option>
   <option value="Citadel Hardness">Citadel Hardness</option>
@@ -98,7 +99,7 @@ function getEmoji(type: string) {
       <button v-for="type in Object.keys(props.config.factories).map(id => props.config.factories[id]).filter(f => f !== undefined).map(f => f.type).filter((v, i, a) => a.indexOf(v) === i)" :key="type"
     @click="toggleType(type)"
     :class="[
-      'px-3 h-[70%] py-1 rounded-md border font-semibold text-sm transition-all duration-300  ease-in-out',
+      'px-3 h-[70%] py-1 cursor-pointer rounded-md border font-semibold text-sm transition-all duration-300  ease-in-out',
       hiddenTypes.includes(type) ? 'bg-bg  text-white border-[var(--color-purple4)]' : 'bg-bg3 text-[var(--color-purple2)] border-[var(--color-purple2)]'
     ]"
   >

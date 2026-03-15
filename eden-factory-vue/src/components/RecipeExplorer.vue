@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, nextTick } from 'vue';
 import type { AppConfig, Recipe } from '../types';
 import { getWikiUrl } from '../utils/wikiIcons';
 import ItemChip from './ItemChip.vue';
@@ -8,11 +8,12 @@ const props = defineProps<{
   config: AppConfig;
   search: string;
     recipeSearch: string | null;
-
+activePanel: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'update:search', val: string): void;
+    (e: 'update:activePanel', val: string): void;
 }>();
 const hiddenTypes = ref<string[]>([]);
 
@@ -116,6 +117,12 @@ function getRecipeFactoryNames(recipeId: string): string {
 function selectRecipe(rid: string) {
   selectedRecipeId.value = rid;
   // emit('update:search', ''); // Clear global search when recipe is clicked
+  if(window.matchMedia("only screen and (max-width: 768px)").matches) {
+    nextTick(() => {
+    const el = document.getElementById('selectedRecipePanel');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
 }
 const recipeTypes = computed(() => {
   const allowed = ['PRODUCTION','REPAIR','UPGRADE','RANDOM']
@@ -128,12 +135,12 @@ const recipeTypes = computed(() => {
 </script>
 
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-5 min-h-[70vh]">
+  <div class="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-5 max-h-[20vh]">
     <div class="flex flex-col gap-2.5">
       <div class="flex flex-col gap-2 mb-4">
         <select
           v-model="selectedFactoryId"
-          class="bg-bg2 border border-border2 rounded-md text-white font-garamond text-[1.05rem] p-[8px_13px] outline-none cursor-pointer focus:border-purple2"
+          class="bg-bg2 border border-border2 rounded-md text-white font-garamond text-[1.05rem] p-[8px_13px] transition-all duration-300 ease-in-out outline-none cursor-pointer hover:border-purple2 focus:border-purple2"
         >
           <option value="">All Factories</option>
           <option v-for="f in factories" :key="f.id" :value="f.id">{{ f.name }}</option>
@@ -144,7 +151,7 @@ const recipeTypes = computed(() => {
   :key="type"
   @click="toggleType(type)"
   :class="[
-    'px-3 h-[70%] py-1 max-w-[110px] max-h-[35px] rounded-md border font-semibold text-sm transition-all duration-300 ease-in-out',
+    'px-3  py-1 max-w-[110px] max-h-[40px] cursor-pointer rounded-md border font-semibold text-sm transition-all duration-300 ease-in-out',
     hiddenTypes.includes(type)
       ? 'bg-bg text-white border-[var(--color-purple4)]'
       : 'bg-bg3 text-[var(--color-purple2)] border-[var(--color-purple2)]'
@@ -156,7 +163,7 @@ const recipeTypes = computed(() => {
         <div class="text-text3 text-sm">{{ filteredRecipes.length }} recipe{{ filteredRecipes.length !== 1 ? 's' : '' }}</div>
       </div>
 
-      <div class="flex-1 overflow-y-auto max-h-[calc(100vh-300px)] flex flex-col gap-1.5 pr-1">
+      <div class="flex-1 overflow-y-auto max-h-[calc(100vh-100px)] flex flex-col gap-1.5 pr-1">
         <div
           v-for="r in filteredRecipes"
           :key="r.id"
@@ -176,8 +183,8 @@ const recipeTypes = computed(() => {
         </div>
       </div>
     </div>
-
-    <div v-if="selectedRecipe" class="bg-linear-to-br from-bg2 to-bg3 border border-border rounded-xl p-[28px_32px] sticky top-[100px] self-start">
+    <div class="flex-col flex  gap-1.3">
+    <div id="selectedRecipePanel" v-if="selectedRecipe" class="w-full bg-linear-to-br from-bg2 to-bg3 border border-border rounded-xl p-[28px_32px]  top-[100px] mb-4 self-start">
       <div class="font-cinzel text-[1.5rem] font-bold bg-linear-to-br from-white to-purple2 bg-clip-text text-transparent mb-1.5">
         {{ selectedRecipe.name }}
       </div>
@@ -221,13 +228,25 @@ const recipeTypes = computed(() => {
     <ItemChip :item="o" />
   </span>
   <span v-if="Object.values(selectedRecipe.output).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
+  
 </div>
+
         </div>
+        
       </div>
+      
     </div>
+    
     <div v-else class="text-text3 italic text-[1.1rem] text-center py-16">
       ← Select a recipe to see details
     </div>
+    <div class="self-end">
+    <button v-if="filteredRecipes.length > 0 && selectedRecipe"
+        class="nav-btn min-w-5 min-h-12 text-[1rem] "
+        @click="emit('update:activePanel', 'calculator'); emit('update:search', selectedRecipe.id);"
+        > Calculate </button>
+        </div>
+  </div>
   </div>
 </template>
 
