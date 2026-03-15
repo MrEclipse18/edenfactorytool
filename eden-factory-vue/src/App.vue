@@ -29,7 +29,7 @@ onMounted(async () => {
       throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodtags.yml)`);
     }
     const yamlText = await response.text();
-    const yamlTextTag = await responseTags.text();
+    await responseTags.text(); // Consume the stream even if unused for now to avoid unused var error if keeping fetch
     console.log('Parsing configuration...');
     config.value = parseConfig(yamlText);
     console.log('Configuration loaded successfully.');
