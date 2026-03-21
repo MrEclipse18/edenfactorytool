@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, nextTick } from 'vue';
+import { computed, ref, nextTick, watch } from 'vue';
 import type { AppConfig, Recipe } from '../types';
 import { getWikiUrl } from '../utils/wikiIcons';
 import { useWorkstation } from '../utils/workstation';
@@ -28,6 +28,22 @@ const recipesByFactory = computed(() => {
   return Object.keys(props.config.recipes);
 });
 
+const PINNED_STORAGE_KEY = 'eden_pinned_recipes';
+const pinnedRecipeIds = ref<string[]>([]);
+
+const savedPins = localStorage.getItem(PINNED_STORAGE_KEY);
+if (savedPins) {
+  try {
+    pinnedRecipeIds.value = JSON.parse(savedPins);
+  } catch (e) {
+    console.error('Failed to load pinned recipes:', e);
+  }
+}
+
+watch(pinnedRecipeIds, (newVal) => {
+  localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(newVal));
+}, { deep: true });
+
 const filteredRecipes = computed(() => {
   const fl = props.search.toLowerCase();
   const allowed = ['PRODUCTION','REPAIR','UPGRADE','RANDOM'];
@@ -36,6 +52,7 @@ const filteredRecipes = computed(() => {
     .map(id => props.config.recipes[id])
     .filter((r): r is Recipe => {
       if (!r) return false;
+
       const type = allowed.includes(r.type) ? r.type : 'MISC';
       if (hiddenTypes.value.includes(type)) return false;
       if (!fl) return true;
@@ -57,9 +74,15 @@ const filteredRecipes = computed(() => {
     });
 });
 
+const pinnedRecipes = computed(() => {
+  return pinnedRecipeIds.value
+    .map(id => props.config.recipes[id])
+    .filter((r): r is Recipe => !!r);
+});
+
 const selectedRecipe = computed(() => {
-  if (!selectedRecipeId.value) return filteredRecipes.value[0] || null;
-  return props.config.recipes[selectedRecipeId.value] || filteredRecipes.value[0] || null;
+  if (!selectedRecipeId.value) return pinnedRecipes.value[0] || filteredRecipes.value[0] || null;
+  return props.config.recipes[selectedRecipeId.value] || null;
 });
 
 const factories = computed(() => {
@@ -127,13 +150,13 @@ function handleWorkstationToggle(id: string, type: 'factory' | 'recipe') {
   }
 }
 
-const pinnedRecipeIds = ref<string[]>([]);
-
 function togglePinRecipe() {
   if (!selectedRecipe.value) return;
+
   const id = selectedRecipe.value.id;
+
   if (pinnedRecipeIds.value.includes(id)) {
-    pinnedRecipeIds.value = pinnedRecipeIds.value.filter(pid => pid !== id);
+    pinnedRecipeIds.value = pinnedRecipeIds.value.filter(r => r !== id);
   } else {
     pinnedRecipeIds.value.push(id);
   }
@@ -195,7 +218,7 @@ function togglePinRecipe() {
                   {{ isInWorkstation(selectedRecipe.id, 'recipe') ? 'Remove' : 'Workstation' }}
                 </button>
                 <button
-                  class="nav-btn text-sm"
+                  class="nav-btn text-sm cursor-pointer"
                   @click="togglePinRecipe"
                 >
                   {{ pinnedRecipeIds.includes(selectedRecipe.id) ? '❌ Unpin' : '📌 Pin' }}
@@ -240,9 +263,77 @@ function togglePinRecipe() {
                 </div>
               </div>
             </div>
+            <div class="self-end">
+              <button v-if="selectedRecipe"
+                class="nav-btn min-w-5 min-h-12 text-[1rem] cursor-pointer"
+                @click="emit('update:activePanel', 'calculator'); emit('update:search', selectedRecipe.id);"
+              >
+                Calculate
+              </button>
+            </div>
           </div>
           <div v-else class="text-text3 italic text-[1.1rem] text-center py-16">
             ← Select a recipe to see details
+          </div>
+
+          <div v-if="pinnedRecipes.length > 0" class="flex flex-col gap-4 mt-2">
+            <div
+              v-for="p in pinnedRecipes"
+              :key="p?.id"
+              class="w-full bg-linear-to-br from-bg2 to-bg3 border border-purple2 rounded-xl p-[24px] opacity-90"
+            >
+              <div class="flex justify-between items-center mb-2">
+                <div class="font-cinzel text-[1.2rem] font-bold text-purple2">
+                  📌 {{ p?.name }}
+                </div>
+
+                <button
+                  class="text-sm text-red-400 hover:text-red-300 cursor-pointer"
+                  @click="pinnedRecipeIds = pinnedRecipeIds.filter(id => id !== p?.id)"
+                >
+                  Remove
+                </button>
+              </div>
+
+              <div class="text-[0.85rem] text-text2 mb-3 flex gap-4 flex-wrap">
+                <span><strong class="text-gold">{{ tn(p!.type) }}</strong></span>
+                <span v-if="p!.production_time">
+                  Time: <strong class="text-gold">{{ fmt(p!.production_time) }}</strong>
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-start">
+                <div>
+                  <div class="text-[0.7rem] text-text3 mb-2 uppercase">Inputs</div>
+                  <div class="flex flex-wrap gap-2.5">
+                    <ItemChip
+                      v-for="i in Object.values(p!.input)"
+                      :key="i.type"
+                      :item="i"
+                      class="cursor-pointer"
+                      @click="emit('update:search', i.type!)"
+                    />
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-center text-[1.5rem] text-gold">
+                  →
+                </div>
+
+                <div>
+                  <div class="text-[0.7rem] text-text3 mb-2 uppercase">Output</div>
+                  <div class="flex flex-wrap gap-2.5">
+                    <ItemChip
+                      v-for="(o, key) in p?.output"
+                      :key="key"
+                      :item="o"
+                      class="cursor-pointer"
+                      @click="emit('update:search', o.type!)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

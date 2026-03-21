@@ -186,30 +186,42 @@ export function useWorkstation(config: AppConfig | null) {
       map.set(key, { type, amount, display_name });
     }
   }
+function isTerminal(type: string, displayName: string | null): boolean {
+  const t = type.toUpperCase();
 
-  function isTerminal(type: string, displayName: string | null): boolean {
-    const t = type.toUpperCase();
-    
-    if (t.includes('BUCKET') || t.includes('BOTTLE')) return true;
+  if (t.includes('BUCKET') || t.includes('BOTTLE')) return true;
 
-    if (displayName) {
-      const name = displayName.toUpperCase();
-      if (name.includes('FOSSIL')) return true;
-      if (name.includes('GRAVEL')) return true;
-      if (name.includes('BUCKET')) return true;
-      if (name.includes('BOTTLE')) return true;
-      return false;
-    }
+  if (displayName) {
+    const name = displayName.toUpperCase();
+    if (name.includes('FOSSIL')) return true;
+    if (name.includes('GRAVEL')) return true;
+    if (name.includes('BUCKET')) return true;
+    if (name.includes('BOTTLE')) return true;
+    if (name.includes('COBBLESTONE')) return true;
+    if (name.includes('STONE')) return true;
+  }
 
-    const baseResources = [
-      'INGOT', 'ORE', 'RAW_', 'DIAMOND', 'REDSTONE', 'LAPIS', 'EMERALD', 
-      'COAL', 'CHARCOAL', 'QUARTZ', 'AMETHYST', 'NETHERITE', 'DEBRIS'
-    ];
-    if (baseResources.some(kw => t.includes(kw))) return true;
 
-    if (t === 'GRAVEL' || t.includes('FOSSIL')) return true;
+  const baseResources = [
+    'INGOT', 'ORE', 'RAW_', 'DIAMOND', 'REDSTONE', 'LAPIS', 'EMERALD', 
+    'COAL', 'CHARCOAL', 'QUARTZ', 'AMETHYST', 'NETHERITE', 'DEBRIS',
+    'COBBLESTONE', 'STONE'
+  ];
+  if (baseResources.some(kw => t.includes(kw))) return true;
 
-    const plantKeywords = [
+  if (t === 'GRAVEL' || t.includes('FOSSIL')) return true;
+
+
+  if (config) {
+    const isLoopItem = Object.values(config.recipes).some(r => {
+      const hasInput = Object.values(r.input).some(i => i.type === type && (i.display_name || null) === (displayName || null));
+      const hasOutput = Object.values(r.output).some(o => o.type === type && (o.display_name || null) === (displayName || null));
+      return hasInput && hasOutput;
+    });
+    if (isLoopItem) return true;
+  }
+
+  const plantKeywords = [
       'SAPLING', 'LEAVES', 'SEEDS', 'FLOWER', 'WHEAT', 'CARROT', 'POTATO', 
       'BEETROOT', 'SUGAR_CANE', 'BAMBOO', 'CACTUS', 'MUSHROOM', 'FUNGUS', 
       'WARPED', 'CRIMSON', 'GRASS', 'FERN', 'VINE', 'LILY_PAD', 'BERRY', 
