@@ -5,8 +5,9 @@ export interface ConfigItem {
   chance?: number;
   is_compacted?: boolean;
     meta?: {
-    lore?: string[];
-  };
+  lore?: string[];
+  enchants?: Record<string, number>;
+};
 }
 
 export interface Factory {

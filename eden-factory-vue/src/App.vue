@@ -7,6 +7,7 @@ import FactoryGrid from './components/FactoryGrid.vue';
 import RecipeExplorer from './components/RecipeExplorer.vue';
 import ProductionCalculator from './components/ProductionCalculator.vue';
 import ItemChip from './components/ItemChip.vue';
+import { getWikiUrl, FB } from './utils/wikiIcons';
 
 
 const config = ref<AppConfig | null>(null);
@@ -17,19 +18,16 @@ const globalSearch = ref('');
 const recipeSearch = ref('All');
 const selectedFactoryId = ref<string | null>(null);
 
-  
+
+
 onMounted(async () => {
   try {
     console.log('Fetching configuration...');
     const response = await fetch('/factorymodconfig.yml');
-    const responseTags = await fetch('/factorymodtags.yml');
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodconfig.yml)`);
-    }else if(!responseTags.ok) {
-      throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodtags.yml)`);
     }
     const yamlText = await response.text();
-    const yamlTextTag = await responseTags.text();
     console.log('Parsing configuration...');
     config.value = parseConfig(yamlText);
     console.log('Configuration loaded successfully.');
@@ -108,6 +106,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
 });
+const reloadPage = () => {
+  window.location.reload(); 
+};
 </script>
 
 <template>
@@ -128,17 +129,20 @@ onBeforeUnmount(() => {
         <div class="relative border-l ml-1.5 border-gray-300">
       <span class="absolute -left-1 flex items-center ml-0 mt-1 justify-center w-2 h-2 bg-blue-500 rounded-full ring-4 ring-white"></span>
           <div class="ml-4 mb-4">
-      <time class="block mb-1 text-sm text-gray-500">
-        March 15, 2026
+
+        <time class="block mb-1 text-sm text-gray-500">
+        March 21, 2026
       </time>
 
       <h3 class="text-lg font-semibold">
-        1.0 Released
+        1.1 Released
       </h3>
 
       <p class="text-gray-600">
-        Major improvements from the original website, including upgraded ui, filters, a working search bar, calculate button inside recipe page, sorting in the factories, changing to vue + tailwind, a overall much smoother experience
+        Added pinning to the recipe page, testing out a new font, fixed 30+ images, added lore and enchants to item chips, made the overall experience nicer
       </p>
+
+      
       </div>
     </div>
 
@@ -155,9 +159,12 @@ onBeforeUnmount(() => {
 
     <header class="bg-linear-to-b from-[rgba(8,7,18,0.40)] to-[rgba(12,11,20,0.75)] border-b border-border2 p-[20px_28px_16px] sticky top-0 z-[49] backdrop-blur-md shadow-[0_2px_32px_rgba(109,40,217,0.18)]">
       <div class="TopBar max-w-[1440px] mx-auto flex items-center gap-5 flex-wrap">
-        <div class="logo">
-          EdenMC <div class="font-cinzel text-[0.7rem] font-normal tracking-[0.22em] uppercase text-text3 ml-2.5 text-fill-initial bg-none">Factories</div>
-        </div>
+        <div class="logo cursor-pointer flex flex-col items-center" @click="reloadPage">
+  <span class="text-[1.2rem] font-bold">EdenMC</span>
+  <span class="font-cinzel text-[0.7rem] font-normal tracking-[0.22em] uppercase text-text3">
+    Factories
+  </span>
+</div>
 <div class="flex-1 min-w-[200px] max-w-[440px] relative">
   <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-text3 text-[1rem] pointer-events-none">
     ⌕
@@ -285,12 +292,17 @@ onBeforeUnmount(() => {
                 class=" bg-bg4 border border-border rounded-lg p-[12px_16px] cursor-pointer transition-all duration-150 hover:border-purple2 hover:bg-purple/10 hover:shadow-[0_2px_12px_var(--glow)]"
                 @click="activePanel = 'recipes'; globalSearch = rid"
               >
-                <template v-if="config.recipes[rid]">
-                  <div class="cursor-pointer text-[1rem] text-white mb-[3px]">{{ config.recipes[rid].name }}</div>
-                  <div class="cursor-pointer text-[0.82rem] text-text3 font-cinzel tracking-[0.03em]">
-                    {{ tn(config.recipes[rid].type) }}{{ config.recipes[rid].production_time ? ' · ' + fmt(config.recipes[rid].production_time) : '' }}
-                  </div>
-                </template>
+               <template v-if="config.recipes[rid]">
+
+  <div class="text-[1rem] text-white mb-[3px]">
+    {{ config.recipes[rid].name }}
+  </div>
+
+  <div class="text-[0.82rem] text-text3 font-cinzel tracking-[0.03em]">
+    {{ tn(config.recipes[rid].type) }}
+    {{ config.recipes[rid].production_time ? ' · ' + fmt(config.recipes[rid].production_time) : '' }}
+  </div>
+</template>
                 <div v-else class="opacity-40 text-white">{{ rid }}</div>
               </div>
             </div>

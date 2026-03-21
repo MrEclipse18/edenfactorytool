@@ -17,8 +17,6 @@ const emit = defineEmits<{
 
 onMounted(async () => {
   try {
-    const responseTags = await fetch('/factorymodtags.yml');
-    const yamlTextTag = await responseTags.text();
 
   }  catch (e: any) {
     console.error('Failed to load configuration:', e);

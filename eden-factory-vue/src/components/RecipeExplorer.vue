@@ -132,6 +132,26 @@ const recipeTypes = computed(() => {
     .map(r => allowed.includes(r.type) ? r.type : 'MISC')
     .filter((v, i, a) => a.indexOf(v) === i)
 })
+
+const pinnedRecipeIds = ref<string[]>([]);
+
+const pinnedRecipes = computed(() => {
+  return pinnedRecipeIds.value
+    .map(id => props.config.recipes[id])
+    .filter(Boolean);
+});
+
+function togglePinRecipe() {
+  if (!selectedRecipe.value) return;
+
+  const id = selectedRecipe.value.id;
+
+  if (pinnedRecipeIds.value.includes(id)) {
+    pinnedRecipeIds.value = pinnedRecipeIds.value.filter(r => r !== id);
+  } else {
+    pinnedRecipeIds.value.push(id);
+  }
+}
 </script>
 
 <template>
@@ -184,10 +204,20 @@ const recipeTypes = computed(() => {
       </div>
     </div>
     <div class="flex-col flex  gap-1.3">
+      <div class="flex">
+        <div class="flex flex-col w-full">
     <div id="selectedRecipePanel" v-if="selectedRecipe" class="w-full bg-linear-to-br from-bg2 to-bg3 border border-border rounded-xl p-[28px_32px]  top-[100px] mb-4 self-start">
+      <div class="flex justify-between">
       <div class="font-cinzel text-[1.5rem] font-bold bg-linear-to-br from-white to-purple2 bg-clip-text text-transparent mb-1.5">
         {{ selectedRecipe.name }}
       </div>
+            <button
+  class="nav-btn text-sm"
+  @click="togglePinRecipe"
+>
+  {{ pinnedRecipeIds.includes(selectedRecipe.id) ? '❌ Unpin' : '📌 Pin' }}
+</button>
+</div>
       <div v-if="recipeFactories.length > 0" class="flex flex-wrap gap-2 mb-3">
         <span v-for="f in recipeFactories" :key="f.id" class="text-[0.75rem] font-cinzel bg-bg4 border border-border2 text-text2 px-2 py-0.5 rounded">
           {{ f.name }}
@@ -242,11 +272,73 @@ const recipeTypes = computed(() => {
     </div>
     <div class="self-end">
     <button v-if="filteredRecipes.length > 0 && selectedRecipe"
-        class="nav-btn min-w-5 min-h-12 text-[1rem] "
+        class="nav-btn min-w-5 min-h-12 text-[1rem]  "
         @click="emit('update:activePanel', 'calculator'); emit('update:search', selectedRecipe.id);"
         > Calculate </button>
         </div>
   </div>
+</div>
+  <div v-if="pinnedRecipes.length > 0" class="flex flex-col gap-4 mt-2">
+  <div
+    v-for="p in pinnedRecipes"
+    :key="p?.id"
+    class="w-full bg-linear-to-br from-bg2 to-bg3 border border-purple2 rounded-xl p-[24px] opacity-90"
+  >
+    <div class="flex justify-between items-center mb-2">
+      <div class="font-cinzel text-[1.2rem] font-bold text-purple2">
+        📌 {{ p?.name }}
+      </div>
+
+      <button
+        class="text-sm text-red-400 hover:text-red-300 pointer-cursor"
+        @click="pinnedRecipeIds = pinnedRecipeIds.filter(id => id !== p?.id)"
+      >
+        Remove
+      </button>
+    </div>
+
+    <div class="text-[0.85rem] text-text2 mb-3 flex gap-4 flex-wrap">
+      <span><strong class="text-gold">{{ tn(p!.type) }}</strong></span>
+      <span v-if="p!.production_time">
+        Time: <strong class="text-gold">{{ fmt(p!.production_time) }}</strong>
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-start">
+      <div>
+        <div class="text-[0.7rem] text-text3 mb-2 uppercase">Inputs</div>
+        <div class="flex flex-wrap gap-2.5">
+          <ItemChip
+            v-for="i in Object.values(p!.input)"
+            :key="i.type"
+            :item="i"
+            class="cursor-pointer";
+            @click="emit('update:search', i.type!)"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center text-[1.5rem] text-gold">
+        →
+      </div>
+
+      <div>
+        <div class="text-[0.7rem]  text-text3 mb-2 uppercase">Output</div>
+        <div class="flex flex-wrap gap-2.5">
+          <ItemChip
+           class="cursor-pointer";
+            v-for="(o, key) in p?.output"
+            :key="key"
+            :item="o"
+             @click="emit('update:search', o.type!)"
+
+          />
+        </div>
+    </div>
+  </div>
+  </div>
+</div>
+</div>
   </div>
 </template>
 

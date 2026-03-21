@@ -1,5 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
 @import "tailwindcss";
+
+@font-face {
+  font-family: "newPixel";
+  src: url("assets/Quantum-Regular.ttf") format("truetype"),
+}
+
 
 @theme {
   --color-bg: #0c0b14;
@@ -24,8 +29,8 @@
   --color-green: #50d090;
   --color-cyan: #50c8e0;
 
-  --font-cinzel: 'Pixelify Sans', sans-serif;
-  --font-garamond: "Pixelify Sans", sans-serif;
+  --font-cinzel: 'newPixel', sans-serif;
+  --font-garamond: "newPixel", sans-serif;
 }
 
 @layer base {
@@ -55,6 +60,8 @@
 
   html {
     scroll-behavior: smooth;
+    font-weight: 400;
+    font-style: normal;
   }
 
   body {
