@@ -82,9 +82,9 @@ const fullAmount = computed(() => props.item.is_compacted ? props.item.amount * 
         </span>
       </div>
       <div class="text-gold font-semibold text-[1rem]">
-        ×{{ fullAmount.toLocaleString() }}
+        ×{{ item.amount.toLocaleString() }}
         <span v-if="item.is_compacted" class="text-text3 font-normal text-[0.8rem] ml-1">
-          ({{ item.amount.toLocaleString() }} stacks)
+          ({{ fullAmount.toLocaleString() }} total)
         </span>
       </div>
       <div v-if="item.display_name" class="text-text3 text-[0.8rem]">{{ item.type }}</div>

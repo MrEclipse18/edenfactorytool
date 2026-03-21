@@ -6,9 +6,9 @@ import type { AppConfig } from './types';
 import FactoryGrid from './components/FactoryGrid.vue';
 import RecipeExplorer from './components/RecipeExplorer.vue';
 import ProductionCalculator from './components/ProductionCalculator.vue';
+import Workstation from './components/Workstation.vue';
 import ItemChip from './components/ItemChip.vue';
-import { getWikiUrl, FB } from './utils/wikiIcons';
-
+import { useWorkstation } from './utils/workstation';
 
 const config = ref<AppConfig | null>(null);
 const loading = ref(true);
@@ -17,6 +17,16 @@ const activePanel = ref('factories');
 const globalSearch = ref('');
 const recipeSearch = ref('All');
 const selectedFactoryId = ref<string | null>(null);
+
+const { addItem, removeItem, isInWorkstation } = useWorkstation(null);
+
+function handleWorkstationToggle(id: string, type: 'factory' | 'recipe') {
+  if (isInWorkstation(id, type)) {
+    removeItem(id, type);
+  } else {
+    addItem(id, type);
+  }
+}
 
 
 
@@ -54,10 +64,8 @@ function selectFactory(id: string) {
   selectedFactoryId.value = id;
   // globalSearch.value = ''; // Clear search bar after selecting a factory
   nextTick(() => {
-    const el = document.getElementById('factory-detail');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
-
 }
 
 function closeFactoryDetail() {
@@ -208,6 +216,13 @@ const reloadPage = () => {
           @click="activePanel = 'calculator'; globalSearch = ''"
           >
           Calculator
+          </button>
+          <button
+          class="nav-btn"
+          :class="{ 'active': activePanel === 'workstation' }"
+          @click="activePanel = 'workstation'; globalSearch = ''"
+          >
+          Workstation
           </button>        </nav>
       </div>
     </header>
@@ -243,12 +258,24 @@ const reloadPage = () => {
                 </div>
                 <div class="text-text3 italic mt-1 text-[0.95rem]">Factory ID: {{ selectedFactory.id }}</div>
               </div>
-              <button
-                class="bg-bg4 border border-border2 text-text2 text-[1.2rem] w-[38px] h-[38px] rounded-lg cursor-pointer flex items-center justify-center transition-all hover:border-purple2 hover:text-purple2 hover:shadow-[0_0_8px_var(--glow)]"
-                @click="closeFactoryDetail"
-              >
-                ✕
-              </button>
+              <div class="flex gap-2">
+                <button 
+                  @click="handleWorkstationToggle(selectedFactory.id, 'factory')"
+                  class="cursor-pointer border font-cinzel text-[0.7rem] tracking-wider px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                  :class="isInWorkstation(selectedFactory.id, 'factory') 
+                    ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
+                    : 'bg-gold/10 border-gold/30 text-gold hover:bg-gold/20'"
+                >
+                  <span>{{ isInWorkstation(selectedFactory.id, 'factory') ? '✕' : '+' }}</span>
+                  {{ isInWorkstation(selectedFactory.id, 'factory') ? 'Remove from Workstation' : 'Add to Workstation' }}
+                </button>
+                <button
+                  class="bg-bg4 border border-border2 text-text2 text-[1.2rem] w-[38px] h-[38px] rounded-lg cursor-pointer flex items-center justify-center transition-all hover:border-purple2 hover:text-purple2 hover:shadow-[0_0_8px_var(--glow)]"
+                  @click="closeFactoryDetail"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div class="flex gap-3 flex-wrap mb-6">
@@ -289,18 +316,27 @@ const reloadPage = () => {
               <div
                 v-for="rid in selectedFactory.recipes"
                 :key="rid"
-                class=" bg-bg4 border border-border rounded-lg p-[12px_16px] cursor-pointer transition-all duration-150 hover:border-purple2 hover:bg-purple/10 hover:shadow-[0_2px_12px_var(--glow)]"
+                class=" group bg-bg4 border border-border rounded-lg p-[12px_16px] cursor-pointer transition-all duration-150 hover:border-purple2 hover:bg-purple/10 hover:shadow-[0_2px_12px_var(--glow)]"
                 @click="activePanel = 'recipes'; globalSearch = rid"
               >
                <template v-if="config.recipes[rid]">
+  <div class="flex justify-between items-start gap-2">
+    <div class="flex-1 min-w-0">
+      <div class="text-[1rem] text-white mb-[3px] truncate">
+        {{ config.recipes[rid].name }}
+      </div>
 
-  <div class="text-[1rem] text-white mb-[3px]">
-    {{ config.recipes[rid].name }}
-  </div>
-
-  <div class="text-[0.82rem] text-text3 font-cinzel tracking-[0.03em]">
-    {{ tn(config.recipes[rid].type) }}
-    {{ config.recipes[rid].production_time ? ' · ' + fmt(config.recipes[rid].production_time) : '' }}
+      <div class="text-[0.82rem] text-text3 font-cinzel tracking-[0.03em]">
+        {{ tn(config.recipes[rid].type) }}
+        {{ config.recipes[rid].production_time ? ' · ' + fmt(config.recipes[rid].production_time) : '' }}
+      </div>
+    </div>
+    <button 
+      @click.stop="handleWorkstationToggle(rid, 'recipe')"
+      class="cursor-pointer opacity-0 group-hover:opacity-100 bg-purple/10 border border-purple/30 text-purple2 font-cinzel text-[0.6rem] px-2 py-1 rounded transition-all hover:bg-purple/20 flex-shrink-0"
+    >
+      {{ isInWorkstation(rid, 'recipe') ? '✕' : '+ Workstation' }}
+    </button>
   </div>
 </template>
                 <div v-else class="opacity-40 text-white">{{ rid }}</div>
@@ -325,6 +361,11 @@ const reloadPage = () => {
         <!-- CALCULATOR PANEL -->
         <div v-if="activePanel === 'calculator'">
           <ProductionCalculator :config="config" :filter="globalSearch" />
+        </div>
+
+        <!-- WORKSTATION PANEL -->
+        <div v-if="activePanel === 'workstation'">
+          <Workstation :config="config" />
         </div>
       </div>
   <div class="fixed bottom-4 right-4" style="display:flex; gap:15px">

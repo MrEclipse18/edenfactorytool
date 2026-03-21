@@ -35,3 +35,16 @@ export interface AppConfig {
   recipes: Record<string, Recipe>;
 }
 
+export interface WorkstationItem {
+  id: string;
+  type: 'factory' | 'recipe';
+  enabled: boolean;
+  amount: number; // For recipes: number of runs. For factories: number of instances.
+  timestamp: number;
+}
+
+export interface WorkstationState {
+  items: WorkstationItem[];
+  expandedItems: string[]; // List of item types currently broken down
+}
+
