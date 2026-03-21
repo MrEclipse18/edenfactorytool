@@ -9,6 +9,11 @@ import ItemChip from './ItemChip.vue';
 const props = defineProps<{
   config: AppConfig;
   filter: string;
+    search: string;
+
+}>();
+const emit = defineEmits<{
+  (e: 'update:search', val: string): void;
 }>();
 
 const step = ref(1);
@@ -280,7 +285,7 @@ const formatChance = (c: number) => {
           <div>
             <div class="font-cinzel text-[0.75rem] tracking-[0.1em] text-text3 mb-2.5 uppercase">Inputs</div>
             <div class="flex flex-wrap gap-2.5">
-              <ItemChip v-for="i in Object.values(currentRecipe.input)" :key="i.type" :item="i" />
+              <ItemChip v-for="i in Object.values(currentRecipe.input)" @click="emit('update:search', i.type)" :key="i.type" :item="i" />
               <span v-if="Object.values(currentRecipe.input).length === 0" class="text-text3 italic">None</span>
             </div>
           </div>
@@ -288,7 +293,7 @@ const formatChance = (c: number) => {
           <div>
             <div class="font-cinzel text-[0.75rem] tracking-[0.1em] text-text3 mb-2.5 uppercase">Output</div>
             <div class="flex flex-wrap gap-2.5">
-              <ItemChip v-for="o in Object.values(currentRecipe.output)" :key="o.type" :item="o" />
+              <ItemChip  v-for="o in Object.values(currentRecipe.output)" @click="emit('update:search', o.type)" :key="o.type" :item="o" />
               <span v-if="Object.values(currentRecipe.output).length === 0" class="text-text3 italic">None</span>
             </div>
           </div>

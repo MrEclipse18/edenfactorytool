@@ -5,6 +5,15 @@ import { getWikiUrl } from '../utils/wikiIcons';
 import { useWorkstation } from '../utils/workstation';
 import ItemChip from './ItemChip.vue';
 
+const workstationBtnRef = ref<HTMLElement | null>(null);
+
+function flashWorkstationButton() {
+  if (!workstationBtnRef.value) return;
+  workstationBtnRef.value.classList.add('animate-pulse');
+  setTimeout(() => {
+    workstationBtnRef.value?.classList.remove('animate-pulse');
+  }, 1700);
+}
 const props = defineProps<{
   config: AppConfig;
   search: string;
@@ -130,7 +139,7 @@ function getRecipeFactoryNames(recipeId: string): string {
 
 function selectRecipe(rid: string) {
   selectedRecipeId.value = rid;
-  emit('update:search', ''); 
+  // emit('update:search', ''); 
   
   if(window.matchMedia("only screen and (max-width: 768px)").matches) {
     nextTick(() => {
@@ -208,11 +217,11 @@ function togglePinRecipe() {
               </div>
               <div class="flex gap-2">
                 <button 
-                  @click="handleWorkstationToggle(selectedRecipe.id, 'recipe')"
+                  @click="handleWorkstationToggle(selectedRecipe.id, 'recipe'); flashWorkstationButton()"
                   class="cursor-pointer border font-cinzel text-[0.7rem] tracking-wider px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5"
                   :class="isInWorkstation(selectedRecipe.id, 'recipe') 
-                    ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
-                    : 'bg-purple/10 border-purple2 text-purple2 hover:bg-purple/30'"
+                    ? 'nav-btn text-sm cursor-pointer' 
+                    : 'nav-btn text-sm cursor-pointer'"
                 >
                   <span>{{ isInWorkstation(selectedRecipe.id, 'recipe') ? '✕' : '+' }}</span>
                   {{ isInWorkstation(selectedRecipe.id, 'recipe') ? 'Remove' : 'Workstation' }}
@@ -258,7 +267,14 @@ function togglePinRecipe() {
               <div>
                 <div class="font-cinzel text-[0.76rem] tracking-[0.1em] text-text3 mb-3 uppercase">Output</div>
                 <div class="flex flex-wrap gap-2.5">
-                  <ItemChip v-for="(o, key) in selectedRecipe.output" :key="key" :item="(o as any)" />
+                  <span
+                    v-for="o in Object.values(selectedRecipe.output)"
+                    :key="o.type"
+                    class="inline-block cursor-pointer"
+                    @click="emit('update:search', o.type!)"
+                  >
+                    <ItemChip :item="o" />
+                  </span>
                   <span v-if="Object.values(selectedRecipe.output).length === 0" class="text-text3 italic text-[0.95rem]">None</span>
                 </div>
               </div>
@@ -324,8 +340,8 @@ function togglePinRecipe() {
                   <div class="text-[0.7rem] text-text3 mb-2 uppercase">Output</div>
                   <div class="flex flex-wrap gap-2.5">
                     <ItemChip
-                      v-for="(o, key) in p?.output"
-                      :key="key"
+                      v-for="o in Object.values(p!.output)"
+                      :key="o.type"
                       :item="o"
                       class="cursor-pointer"
                       @click="emit('update:search', o.type!)"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { AppConfig } from '../types';
 import { useWorkstation } from '../utils/workstation';
 import { getWikiUrl } from '../utils/wikiIcons';
@@ -19,6 +19,7 @@ const {
   clearWorkstation, 
   totalBreakdown 
 } = useWorkstation(props.config);
+let hovered = ref(false);
 
 const workstationEntries = computed(() => {
   return items.value.map(item => {
@@ -58,7 +59,7 @@ function getStacks(type: string, amount: number): string {
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-[1fr_450px] gap-8">
     <!-- Left Column: Workstation Items -->
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6 ">
       <div class="flex justify-between items-center border-b border-border2 pb-4">
         <h2 class="font-cinzel text-xl text-gold">Workstation Planner</h2>
         <button 
@@ -74,19 +75,23 @@ function getStacks(type: string, amount: number): string {
         Your workstation is empty. Add factories or recipes to start planning.
       </div>
 
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3 relative " >
         <div 
           v-for="entry in workstationEntries" 
           :key="entry.id + entry.type"
           class="bg-bg2 border border-border rounded-lg p-4 flex items-center gap-4 transition-all"
           :class="{ 'opacity-50 grayscale-[50%]': !entry.enabled }"
+          @mouseover="hovered = true"
+  @mouseleave="hovered = false"
         >
-          <input 
-            type="checkbox" 
-            :checked="entry.enabled" 
-            @change="toggleItem(entry.id, entry.type)"
-            class="w-5 h-5 accent-purple2 cursor-pointer"
-          />
+        <label class="inline-flex items-center cursor-pointer">
+  <input 
+    type="checkbox" 
+    :checked="entry.enabled" 
+    @change="toggleItem(entry.id, entry.type)"
+    class="appearance-none w-4 h-4 rounded-md bg-purple-200 checked:bg-purple-600 checked:ring-2 checked:ring-purple-400 transition duration-200 ease-in-out hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-300"
+  />
+</label>
           
           <div class="w-10 h-10 bg-bg3 rounded flex items-center justify-center border border-border2">
             <img v-if="entry.icon" :src="entry.icon" class="w-8 h-8 pixelated" />
@@ -99,22 +104,23 @@ function getStacks(type: string, amount: number): string {
           </div>
 
           <div class="flex items-center gap-3">
-            <div v-if="entry.type === 'recipe'" class="flex flex-col items-end">
-              <span class="text-[0.65rem] text-text3 font-cinzel uppercase mb-1">
-                Runs
-              </span>
-              <input 
-                type="number" 
-                :value="entry.amount"
-                @input="e => updateAmount(entry.id, entry.type, parseInt((e.target as HTMLInputElement).value))"
-                class="w-20 bg-bg3 border border-border2 rounded p-1 text-center text-white focus:border-purple2 outline-none"
-                min="1"
-              />
-            </div>
+            <div v-if="entry.type === 'recipe'" class="flex flex-col  mr-[30px] items-start">
+  <label class="text-[0.65rem] text-text3 font-cinzel uppercase mb-1">
+    Runs
+  </label>
+  <input 
+    type="number" 
+    :value="entry.amount"
+    @input="e => updateAmount(entry.id, entry.type, parseInt((e.target as HTMLInputElement).value))"
+    class="w-20 bg-bg3 border border-border2 rounded p-1 text-center text-white focus:border-purple2 outline-none"
+    min="1"
+  />
+</div>
             
             <button 
               @click="removeItem(entry.id, entry.type)"
-              class="text-text3 hover:text-red transition-colors p-2"
+              v-if="hovered"
+              class="absolute top-0 right-1 cursor-pointer text-text3 hover:text-red transition-colors p-2"
             >
               ✕
             </button>
@@ -153,6 +159,7 @@ function getStacks(type: string, amount: number): string {
       </div>
     </div>
   </div>
+  <p class="absolute bottom-0 italic text-xs">This feature is new and still in testing! Feel free to leave feedback on the github page</p>
 </template>
 
 <style scoped>

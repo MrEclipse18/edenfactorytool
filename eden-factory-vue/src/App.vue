@@ -29,7 +29,11 @@ function handleWorkstationToggle(id: string, type: 'factory' | 'recipe') {
 }
 
 
+import { provide } from 'vue';
 
+provide('setGlobalSearch', (val: string) => {
+  globalSearch.value = val;
+});
 onMounted(async () => {
   try {
     console.log('Fetching configuration...');
@@ -117,6 +121,11 @@ onBeforeUnmount(() => {
 const reloadPage = () => {
   window.location.reload(); 
 };
+
+
+function handleAddToWorkstation() {
+  handleWorkstationToggle(selectedFactory.value!.id, 'factory');
+}
 </script>
 
 <template>
@@ -147,7 +156,7 @@ const reloadPage = () => {
       </h3>
 
       <p class="text-gray-600">
-        Added pinning to the recipe page, testing out a new font, fixed 30+ images, added lore and enchants to item chips, made the overall experience nicer
+        Added pinning to the recipe page, Added workstation page, testing out a new font, fixed 30+ images, added lore and enchants to item chips, made the overall experience nicer
       </p>
 
       
@@ -188,6 +197,7 @@ const reloadPage = () => {
     <option value="Name">Name</option>
   </select>
   <input
+    id="SearchBar"
     v-model="globalSearch"
     type="text"
     :placeholder="searchPlaceholder"
@@ -218,12 +228,14 @@ const reloadPage = () => {
           Calculator
           </button>
           <button
-          class="nav-btn"
-          :class="{ 'active': activePanel === 'workstation' }"
-          @click="activePanel = 'workstation'; globalSearch = ''"
-          >
-          Workstation
-          </button>        </nav>
+  id="workstationPanelButton"
+  ref="workstationBtnRef"
+  class="nav-btn"
+  :class="{ 'active': activePanel === 'workstation' }"
+  @click="activePanel = 'workstation'; globalSearch = ''"
+>
+  Workstation
+</button>       </nav>
       </div>
     </header>
 
@@ -259,16 +271,17 @@ const reloadPage = () => {
                 <div class="text-text3 italic mt-1 text-[0.95rem]">Factory ID: {{ selectedFactory.id }}</div>
               </div>
               <div class="flex gap-2">
-                <button 
-                  @click="handleWorkstationToggle(selectedFactory.id, 'factory')"
-                  class="cursor-pointer border font-cinzel text-[0.7rem] tracking-wider px-4 py-2 rounded-lg transition-all flex items-center gap-2"
-                  :class="isInWorkstation(selectedFactory.id, 'factory') 
-                    ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
-                    : 'bg-gold/10 border-gold/30 text-gold hover:bg-gold/20'"
-                >
-                  <span>{{ isInWorkstation(selectedFactory.id, 'factory') ? '✕' : '+' }}</span>
-                  {{ isInWorkstation(selectedFactory.id, 'factory') ? 'Remove from Workstation' : 'Add to Workstation' }}
-                </button>
+                <button
+  id="AddToWorkStation"
+  @click="handleAddToWorkstation"
+  class="cursor-pointer border font-cinzel text-[0.7rem] tracking-wider px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+  :class="isInWorkstation(selectedFactory.id, 'factory') 
+    ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
+    : 'bg-gold/10 border-gold/30 text-gold hover:bg-gold/20'"
+>
+  <span>{{ isInWorkstation(selectedFactory.id, 'factory') ? '✕' : '+' }}</span>
+  {{ isInWorkstation(selectedFactory.id, 'factory') ? 'Remove from Workstation' : 'Add to Workstation' }}
+</button>
                 <button
                   class="bg-bg4 border border-border2 text-text2 text-[1.2rem] w-[38px] h-[38px] rounded-lg cursor-pointer flex items-center justify-center transition-all hover:border-purple2 hover:text-purple2 hover:shadow-[0_0_8px_var(--glow)]"
                   @click="closeFactoryDetail"
@@ -360,7 +373,7 @@ const reloadPage = () => {
 
         <!-- CALCULATOR PANEL -->
         <div v-if="activePanel === 'calculator'">
-          <ProductionCalculator :config="config" :filter="globalSearch" />
+          <ProductionCalculator v-model:search="globalSearch"  :config="config" :filter="globalSearch" />
         </div>
 
         <!-- WORKSTATION PANEL -->

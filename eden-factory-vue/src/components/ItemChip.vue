@@ -4,10 +4,19 @@ import type { ConfigItem } from '../types';
 import { getWikiUrl, FB } from '../utils/wikiIcons';
 import { getStackSize } from '../utils/stackSizes';
 
+
+
 const props = defineProps<{
   item: ConfigItem;
   size?: number;
+  
 }>();
+const emit = defineEmits<{
+  (e: 'update:search', val: string): void;
+    (e: 'select', val: string): void;
+
+}>();
+
 const enchants = computed(() => {
   const meta = props.item.meta;
   if (!meta) return [];
@@ -43,15 +52,19 @@ const borderClass = computed(() => {
 let hovered = ref(false);
 const stackSize = computed(() => getStackSize(props.item.type));
 const fullAmount = computed(() => props.item.is_compacted ? props.item.amount * stackSize.value : props.item.amount);
+
+
 </script>
 
 <template>
-  <div  @mouseover="hovered = true"
+  <div
+  @mouseover="hovered = true"
   @mouseleave="hovered = false"
   :class="[
-    ' bg-bg4 relative border rounded-lg p-2.5 flex items-center gap-3 min-w-[170px] h-[90px] transition-all duration-150',
+    ' bg-bg4 cursor-pointer relative border rounded-lg p-2.5 flex items-center gap-3 min-w-[170px] h-[90px] transition-all duration-150',
     borderClass
-  ]">
+  ]"
+>
     <div class="w-11 h-11 flex-shrink-0 transition-all duration-300 flex items-center justify-center">
       <img
         v-if="wikiUrl && !imgError"
