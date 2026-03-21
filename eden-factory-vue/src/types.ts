@@ -39,7 +39,7 @@ export interface WorkstationItem {
   id: string;
   type: 'factory' | 'recipe';
   enabled: boolean;
-  amount: number; // For recipes: number of runs. For factories: number of instances.
+  amount: number; // For recipes: number of runs
   timestamp: number;
 }
 
