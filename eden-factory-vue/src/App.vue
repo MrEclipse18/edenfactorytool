@@ -41,6 +41,7 @@ onMounted(async () => {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodconfig.yml)`);
     }
+    
     const yamlText = await response.text();
     console.log('Parsing configuration...');
     config.value = parseConfig(yamlText);

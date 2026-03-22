@@ -19,8 +19,7 @@ onMounted(async () => {
   try {
 
   }  catch (e: any) {
-    console.error('Failed to load configuration:', e);
-  } finally {
+    console.warn('Failed to load optional tags in FactoryGrid:', e);
   }
 });
 // <-- define reactive state for the dropdown
