@@ -5,8 +5,9 @@ export interface ConfigItem {
   chance?: number;
   is_compacted?: boolean;
     meta?: {
-    lore?: string[];
-  };
+  lore?: string[];
+  enchants?: Record<string, number>;
+};
 }
 
 export interface Factory {
@@ -32,5 +33,18 @@ export interface Recipe {
 export interface AppConfig {
   factories: Record<string, Factory>;
   recipes: Record<string, Recipe>;
+}
+
+export interface WorkstationItem {
+  id: string;
+  type: 'factory' | 'recipe';
+  enabled: boolean;
+  amount: number; // For recipes: number of runs
+  timestamp: number;
+}
+
+export interface WorkstationState {
+  items: WorkstationItem[];
+  expandedItems: string[]; // List of item types currently broken down
 }
 

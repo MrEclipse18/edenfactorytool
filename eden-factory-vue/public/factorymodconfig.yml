@@ -17910,7 +17910,6 @@ recipes:
         ==: org.bukkit.inventory.ItemStack
         type: MAGMA_BLOCK 
         amount: 4
-    output:
       health_gained: 10000
 
   #########################################

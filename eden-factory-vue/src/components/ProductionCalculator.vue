@@ -3,19 +3,35 @@ import { ref, computed, nextTick } from 'vue';
 import type { AppConfig, ConfigItem } from '../types';
 import { getWikiUrl } from '../utils/wikiIcons';
 import { getStackSize } from '../utils/stackSizes';
+import { useWorkstation } from '../utils/workstation';
 import ItemChip from './ItemChip.vue';
 
 const props = defineProps<{
   config: AppConfig;
   filter: string;
+    search: string;
+
+}>();
+const emit = defineEmits<{
+  (e: 'update:search', val: string): void;
 }>();
 
 const step = ref(1);
 const selectedFactoryId = ref<string | null>(null);
 const selectedRecipeId = ref<string | null>(null);
-const targetQuantity = ref(64);
+const targetQuantity = ref<number | null>(64);
 const selectedOutputItem = ref('');
 const calculateSection = ref<HTMLElement | null>(null);
+
+const { addItem, removeItem, isInWorkstation } = useWorkstation(null);
+
+function handleWorkstationToggle(id: string, type: 'factory' | 'recipe') {
+  if (isInWorkstation(id, type)) {
+    removeItem(id, type);
+  } else {
+    addItem(id, type, targetQuantity.value || 1);
+  }
+}
 
 const searchResults = computed(() => {
   const fl = props.filter.toLowerCase();
@@ -25,7 +41,7 @@ const searchResults = computed(() => {
     if (r.name.toLowerCase().includes(fl) || r.id.toLowerCase().includes(fl)) return true;
     return [...Object.values(r.input), ...Object.values(r.output)].some(i => {
       const displayName = i.display_name || i.type.split('_').map(w => (w[0] ? w[0].toUpperCase() : '') + w.slice(1).toLowerCase()).join(' ');
-      return displayName.toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl);
+      return displayName.toLowerCase().includes(fl) || i.type.toLowerCase().includes(fl);
     });
   });
 });
@@ -76,7 +92,7 @@ async function selectRecipe(id: string) {
 }
 
 const calculationResults = computed(() => {
-  if (!currentRecipe.value) return null;
+  if (!currentRecipe.value || !targetQuantity.value) return null;
   const targetItem = currentRecipe.value.output[selectedOutputItem.value] || Object.values(currentRecipe.value.output)[0];
   if (!targetItem) return null;
 
@@ -243,10 +259,22 @@ const formatChance = (c: number) => {
         <div class="font-cinzel text-[1.3rem] font-bold bg-linear-to-br from-white to-purple2 bg-clip-text text-transparent mb-1.5">
           {{ currentRecipe.name }}
         </div>
-        <div v-if="recipeFactories.length > 0" class="flex flex-wrap gap-2 mb-4">
-          <span v-for="f in recipeFactories" :key="f.id" class="text-[0.7rem] font-cinzel bg-bg4 border border-border2 text-text2 px-2 py-0.5 rounded">
-            {{ f.name }}
-          </span>
+        <div class="flex justify-between items-start mb-4">
+          <div v-if="recipeFactories.length > 0" class="flex flex-wrap gap-2">
+            <span v-for="f in recipeFactories" :key="f.id" class="text-[0.7rem] font-cinzel bg-bg4 border border-border2 text-text2 px-2 py-0.5 rounded">
+              {{ f.name }}
+            </span>
+          </div>
+          <button 
+            @click="handleWorkstationToggle(currentRecipe.id, 'recipe')"
+            class="cursor-pointer border font-cinzel text-[0.65rem] tracking-wider px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5"
+            :class="isInWorkstation(currentRecipe.id, 'recipe') 
+              ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
+              : 'bg-purple/10 border-purple2 text-purple2 hover:bg-purple/30'"
+          >
+            <span>{{ isInWorkstation(currentRecipe.id, 'recipe') ? '✕' : '+' }}</span>
+            {{ isInWorkstation(currentRecipe.id, 'recipe') ? 'Remove' : 'Workstation' }}
+          </button>
         </div>
         <div class="text-[0.9rem] text-text2 mb-6 flex gap-3.5 flex-wrap">
           <span><strong class="text-gold">{{ tn(currentRecipe.type) }}</strong></span>
@@ -257,7 +285,7 @@ const formatChance = (c: number) => {
           <div>
             <div class="font-cinzel text-[0.75rem] tracking-[0.1em] text-text3 mb-2.5 uppercase">Inputs</div>
             <div class="flex flex-wrap gap-2.5">
-              <ItemChip v-for="i in Object.values(currentRecipe.input)" :key="i.type" :item="i" />
+              <ItemChip v-for="i in Object.values(currentRecipe.input)" @click="emit('update:search', i.type)" :key="i.type" :item="i" />
               <span v-if="Object.values(currentRecipe.input).length === 0" class="text-text3 italic">None</span>
             </div>
           </div>
@@ -265,7 +293,7 @@ const formatChance = (c: number) => {
           <div>
             <div class="font-cinzel text-[0.75rem] tracking-[0.1em] text-text3 mb-2.5 uppercase">Output</div>
             <div class="flex flex-wrap gap-2.5">
-              <ItemChip v-for="o in Object.values(currentRecipe.output)" :key="o.type" :item="o" />
+              <ItemChip  v-for="o in Object.values(currentRecipe.output)" @click="emit('update:search', o.type)" :key="o.type" :item="o" />
               <span v-if="Object.values(currentRecipe.output).length === 0" class="text-text3 italic">None</span>
             </div>
           </div>
@@ -277,9 +305,8 @@ const formatChance = (c: number) => {
           <div class="flex items-center gap-5.5 flex-wrap"> 
           <input
             v-model.number="targetQuantity"
-                          @input="targetQuantity = Math.min(Math.max(targetQuantity, 1), 999999)"
-  type="number"
-  min="1"
+            type="number"
+            min="1"
             class="h-13 bg-bg border border-border2 rounded-md text-white font-garamond text-[1.2rem] font-semibold p-[10px_14px] w-[120px] outline-none text-left focus:border-purple2 focus:shadow-[0_0_0_3px_rgba(192,132,232,0.12)]"
           />
           <select
@@ -313,7 +340,12 @@ const formatChance = (c: number) => {
               </span>
             </span>
             <span>
-              <span class="text-gold2 font-semibold text-[1.05rem]">{{ Math.round(o.expected || o.total).toLocaleString() }}</span>
+              <span class="text-gold2 font-semibold text-[1.05rem]">
+                {{ (o.amount * calculationResults.runs).toLocaleString() }}
+                <span v-if="o.is_compacted" class="text-text3 font-normal text-[0.84rem] ml-1">
+                  ({{ Math.round(o.expected || o.total).toLocaleString() }} total)
+                </span>
+              </span>
               <span class="text-text3 text-[0.84rem] ml-1"> ({{ o.amount }}×{{ o.is_compacted ? getStackSize(o.type) + '×' : '' }}{{ (o.chance || 1).toFixed(2) }}×{{ calculationResults.runs }})</span>
             </span>
           </div>
@@ -328,7 +360,12 @@ const formatChance = (c: number) => {
               </span>
             </span>
             <span>
-              <span class="text-gold2 font-semibold text-[1.05rem]">{{ i.total.toLocaleString() }}</span>
+              <span class="text-gold2 font-semibold text-[1.05rem]">
+                {{ (i.amount * calculationResults.runs).toLocaleString() }}
+                <span v-if="i.is_compacted" class="text-text3 font-normal text-[0.84rem] ml-1">
+                  ({{ i.total.toLocaleString() }} total)
+                </span>
+              </span>
               <span class="text-text3 text-[0.84rem] ml-1"> ({{ i.amount }}×{{ i.is_compacted ? getStackSize(i.type) + '×' : '' }}{{ calculationResults.runs }})</span>
             </span>
           </div>

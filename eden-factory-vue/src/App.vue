@@ -6,8 +6,9 @@ import type { AppConfig } from './types';
 import FactoryGrid from './components/FactoryGrid.vue';
 import RecipeExplorer from './components/RecipeExplorer.vue';
 import ProductionCalculator from './components/ProductionCalculator.vue';
+import Workstation from './components/Workstation.vue';
 import ItemChip from './components/ItemChip.vue';
-
+import { useWorkstation } from './utils/workstation';
 
 const config = ref<AppConfig | null>(null);
 const loading = ref(true);
@@ -17,32 +18,31 @@ const globalSearch = ref('');
 const recipeSearch = ref('All');
 const selectedFactoryId = ref<string | null>(null);
 
-  
+const { addItem, removeItem, isInWorkstation } = useWorkstation(null);
+
+function handleWorkstationToggle(id: string, type: 'factory' | 'recipe') {
+  if (isInWorkstation(id, type)) {
+    removeItem(id, type);
+  } else {
+    addItem(id, type);
+  }
+}
+
+
+import { provide } from 'vue';
+
+provide('setGlobalSearch', (val: string) => {
+  globalSearch.value = val;
+});
 onMounted(async () => {
   try {
     console.log('Fetching configuration...');
-    // Use relative paths to support subfolder deployments
-    const response = await fetch('factorymodconfig.yml');
-    
+    const response = await fetch('/factorymodconfig.yml');
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch factorymodconfig.yml)`);
+      throw new Error(`HTTP ${response.status} — ${response.statusText} (Tried to fetch /factorymodconfig.yml)`);
     }
     
     const yamlText = await response.text();
-    
-    // Attempt to fetch tags, but don't crash if they are missing
-    try {
-      const responseTags = await fetch('factorymodtags.yml');
-      if (responseTags.ok) {
-        await responseTags.text();
-        console.log('Tags loaded successfully.');
-      } else {
-        console.warn(`Optional factorymodtags.yml not found (Status ${responseTags.status})`);
-      }
-    } catch (tagErr) {
-      console.warn('Failed to fetch optional tags:', tagErr);
-    }
-
     console.log('Parsing configuration...');
     config.value = parseConfig(yamlText);
     console.log('Configuration loaded successfully.');
@@ -69,10 +69,8 @@ function selectFactory(id: string) {
   selectedFactoryId.value = id;
   // globalSearch.value = ''; // Clear search bar after selecting a factory
   nextTick(() => {
-    const el = document.getElementById('factory-detail');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
-
 }
 
 function closeFactoryDetail() {
@@ -121,6 +119,14 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
 });
+const reloadPage = () => {
+  window.location.reload(); 
+};
+
+
+function handleAddToWorkstation() {
+  handleWorkstationToggle(selectedFactory.value!.id, 'factory');
+}
 </script>
 
 <template>
@@ -141,17 +147,20 @@ onBeforeUnmount(() => {
         <div class="relative border-l ml-1.5 border-gray-300">
       <span class="absolute -left-1 flex items-center ml-0 mt-1 justify-center w-2 h-2 bg-blue-500 rounded-full ring-4 ring-white"></span>
           <div class="ml-4 mb-4">
-      <time class="block mb-1 text-sm text-gray-500">
-        March 15, 2026
+
+        <time class="block mb-1 text-sm text-gray-500">
+        March 21, 2026
       </time>
 
       <h3 class="text-lg font-semibold">
-        1.0 Released
+        1.1 Released
       </h3>
 
       <p class="text-gray-600">
-        Major improvements from the original website, including upgraded ui, filters, a working search bar, calculate button inside recipe page, sorting in the factories, changing to vue + tailwind, a overall much smoother experience
+        Added pinning to the recipe page, Added workstation page, testing out a new font, fixed 30+ images, added lore and enchants to item chips, made the overall experience nicer
       </p>
+
+      
       </div>
     </div>
 
@@ -168,9 +177,12 @@ onBeforeUnmount(() => {
 
     <header class="bg-linear-to-b from-[rgba(8,7,18,0.40)] to-[rgba(12,11,20,0.75)] border-b border-border2 p-[20px_28px_16px] sticky top-0 z-[49] backdrop-blur-md shadow-[0_2px_32px_rgba(109,40,217,0.18)]">
       <div class="TopBar max-w-[1440px] mx-auto flex items-center gap-5 flex-wrap">
-        <div class="logo">
-          EdenMC <div class="font-cinzel text-[0.7rem] font-normal tracking-[0.22em] uppercase text-text3 ml-2.5 text-fill-initial bg-none">Factories</div>
-        </div>
+        <div class="logo cursor-pointer flex flex-col items-center" @click="reloadPage">
+  <span class="text-[1.2rem] font-bold">EdenMC</span>
+  <span class="font-cinzel text-[0.7rem] font-normal tracking-[0.22em] uppercase text-text3">
+    Factories
+  </span>
+</div>
 <div class="flex-1 min-w-[200px] max-w-[440px] relative">
   <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-text3 text-[1rem] pointer-events-none">
     ⌕
@@ -186,6 +198,7 @@ onBeforeUnmount(() => {
     <option value="Name">Name</option>
   </select>
   <input
+    id="SearchBar"
     v-model="globalSearch"
     type="text"
     :placeholder="searchPlaceholder"
@@ -214,7 +227,16 @@ onBeforeUnmount(() => {
           @click="activePanel = 'calculator'; globalSearch = ''"
           >
           Calculator
-          </button>        </nav>
+          </button>
+          <button
+  id="workstationPanelButton"
+  ref="workstationBtnRef"
+  class="nav-btn"
+  :class="{ 'active': activePanel === 'workstation' }"
+  @click="activePanel = 'workstation'; globalSearch = ''"
+>
+  Workstation
+</button>       </nav>
       </div>
     </header>
 
@@ -249,12 +271,25 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="text-text3 italic mt-1 text-[0.95rem]">Factory ID: {{ selectedFactory.id }}</div>
               </div>
-              <button
-                class="bg-bg4 border border-border2 text-text2 text-[1.2rem] w-[38px] h-[38px] rounded-lg cursor-pointer flex items-center justify-center transition-all hover:border-purple2 hover:text-purple2 hover:shadow-[0_0_8px_var(--glow)]"
-                @click="closeFactoryDetail"
-              >
-                ✕
-              </button>
+              <div class="flex gap-2">
+                <button
+  id="AddToWorkStation"
+  @click="handleAddToWorkstation"
+  class="cursor-pointer border font-cinzel text-[0.7rem] tracking-wider px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+  :class="isInWorkstation(selectedFactory.id, 'factory') 
+    ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
+    : 'bg-gold/10 border-gold/30 text-gold hover:bg-gold/20'"
+>
+  <span>{{ isInWorkstation(selectedFactory.id, 'factory') ? '✕' : '+' }}</span>
+  {{ isInWorkstation(selectedFactory.id, 'factory') ? 'Remove from Workstation' : 'Add to Workstation' }}
+</button>
+                <button
+                  class="bg-bg4 border border-border2 text-text2 text-[1.2rem] w-[38px] h-[38px] rounded-lg cursor-pointer flex items-center justify-center transition-all hover:border-purple2 hover:text-purple2 hover:shadow-[0_0_8px_var(--glow)]"
+                  @click="closeFactoryDetail"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div class="flex gap-3 flex-wrap mb-6">
@@ -295,15 +330,29 @@ onBeforeUnmount(() => {
               <div
                 v-for="rid in selectedFactory.recipes"
                 :key="rid"
-                class=" bg-bg4 border border-border rounded-lg p-[12px_16px] cursor-pointer transition-all duration-150 hover:border-purple2 hover:bg-purple/10 hover:shadow-[0_2px_12px_var(--glow)]"
+                class=" group bg-bg4 border border-border rounded-lg p-[12px_16px] cursor-pointer transition-all duration-150 hover:border-purple2 hover:bg-purple/10 hover:shadow-[0_2px_12px_var(--glow)]"
                 @click="activePanel = 'recipes'; globalSearch = rid"
               >
-                <template v-if="config.recipes[rid]">
-                  <div class="cursor-pointer text-[1rem] text-white mb-[3px]">{{ config.recipes[rid].name }}</div>
-                  <div class="cursor-pointer text-[0.82rem] text-text3 font-cinzel tracking-[0.03em]">
-                    {{ tn(config.recipes[rid].type) }}{{ config.recipes[rid].production_time ? ' · ' + fmt(config.recipes[rid].production_time) : '' }}
-                  </div>
-                </template>
+               <template v-if="config.recipes[rid]">
+  <div class="flex justify-between items-start gap-2">
+    <div class="flex-1 min-w-0">
+      <div class="text-[1rem] text-white mb-[3px] truncate">
+        {{ config.recipes[rid].name }}
+      </div>
+
+      <div class="text-[0.82rem] text-text3 font-cinzel tracking-[0.03em]">
+        {{ tn(config.recipes[rid].type) }}
+        {{ config.recipes[rid].production_time ? ' · ' + fmt(config.recipes[rid].production_time) : '' }}
+      </div>
+    </div>
+    <button 
+      @click.stop="handleWorkstationToggle(rid, 'recipe')"
+      class="cursor-pointer opacity-0 group-hover:opacity-100 bg-purple/10 border border-purple/30 text-purple2 font-cinzel text-[0.6rem] px-2 py-1 rounded transition-all hover:bg-purple/20 flex-shrink-0"
+    >
+      {{ isInWorkstation(rid, 'recipe') ? '✕' : '+ Workstation' }}
+    </button>
+  </div>
+</template>
                 <div v-else class="opacity-40 text-white">{{ rid }}</div>
               </div>
             </div>
@@ -325,7 +374,12 @@ onBeforeUnmount(() => {
 
         <!-- CALCULATOR PANEL -->
         <div v-if="activePanel === 'calculator'">
-          <ProductionCalculator :config="config" :filter="globalSearch" />
+          <ProductionCalculator v-model:search="globalSearch"  :config="config" :filter="globalSearch" />
+        </div>
+
+        <!-- WORKSTATION PANEL -->
+        <div v-if="activePanel === 'workstation'">
+          <Workstation :config="config" />
         </div>
       </div>
   <div class="fixed bottom-4 right-4" style="display:flex; gap:15px">

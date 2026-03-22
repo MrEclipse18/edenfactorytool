@@ -6,14 +6,14 @@ function parseItemStack(obj: any): ConfigItem {
   let amount = 1;
   let display_name: string | null = null;
   let chance: number | undefined = undefined;
+  let is_compacted = false;
+  let meta: { lore?: string[]; enchants?: Record<string, number> } | undefined;
 
   if (typeof obj === 'string') {
     type = obj;
   } else if (obj && typeof obj === 'object') {
-    // Handle chance wrappers: { chance: 0.5, some_key: { type: ... } }
     if (obj.chance !== undefined) {
       chance = obj.chance;
-      // The actual item is usually the other key in this object
       const otherKey = Object.keys(obj).find(k => k !== 'chance');
       if (otherKey && typeof obj[otherKey] === 'object') {
         const inner = parseItemStack(obj[otherKey]);
@@ -21,32 +21,39 @@ function parseItemStack(obj: any): ConfigItem {
       }
     }
 
-    // If it's a map where values are item stacks (common in this config)
-    // and we don't have a 'type' directly on this object, but it has one child which is an object
     const keys = Object.keys(obj);
     if (!obj.type && keys.length === 1 && keys[0] !== undefined) {
       const key = keys[0];
-      if (typeof obj[key] === 'object') {
-        return parseItemStack(obj[key]);
-      }
+      if (typeof obj[key] === 'object') return parseItemStack(obj[key]);
     }
 
     type = obj.type || 'UNKNOWN';
-    amount = obj.amount || 1;
+    amount = obj.amount ?? 1;
+
     if (obj.meta) {
-      if (obj.meta['display-name']) {
-        display_name = obj.meta['display-name'];
-      }
+      meta = {};
+
+      if (obj.meta['display-name']) display_name = obj.meta['display-name'];
+
       if (obj.meta.lore) {
-        const lore = Array.isArray(obj.meta.lore) ? obj.meta.lore : [obj.meta.lore];
-        if (lore.some((line: string) => line.includes('Compacted Item'))) {
-          return { type, amount, display_name, is_compacted: true, ...(chance !== undefined ? { chance } : {}) };
+        const loreArray = Array.isArray(obj.meta.lore) ? obj.meta.lore : [obj.meta.lore];
+        meta.lore = loreArray;
+        if (loreArray.some((line: string) => line.toLowerCase().includes('compacted'))) {
+          is_compacted = true;
         }
+      }
+
+      if (obj.meta.enchants && typeof obj.meta.enchants === 'object') {
+        meta.enchants = obj.meta.enchants;
       }
     }
   }
 
-  return { type, amount, display_name, ...(chance !== undefined ? { chance } : {}) };
+  const result: ConfigItem = { type, amount, display_name, ...(chance !== undefined ? { chance } : {}) };
+  if (is_compacted) result.is_compacted = true;
+  if (meta) result.meta = meta;
+
+  return result;
 }
 
 export function parseConfig(yamlText: string): AppConfig {
@@ -67,7 +74,7 @@ export function parseConfig(yamlText: string): AppConfig {
         id,
         name: f.name || id,
         type: f.type || 'FCC',
-        citadelBreakReduction: f.citadelBreakReduction || null,
+        citadelBreakReduction: f.citadelBreakReduction ?? null,
         fuel: f.fuel ? parseItemStack(f.fuel) : null,
         setupcost,
         recipes: f.recipes || [],
