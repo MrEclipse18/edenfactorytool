@@ -3,7 +3,6 @@ import { ref, computed, nextTick } from 'vue';
 import type { AppConfig, ConfigItem } from '../types';
 import { getWikiUrl } from '../utils/wikiIcons';
 import { getStackSize } from '../utils/stackSizes';
-import { useWorkstation } from '../utils/workstation';
 import ItemChip from './ItemChip.vue';
 
 const props = defineProps<{
@@ -23,15 +22,8 @@ const targetQuantity = ref<number | null>(64);
 const selectedOutputItem = ref('');
 const calculateSection = ref<HTMLElement | null>(null);
 
-const { addItem, removeItem, isInWorkstation } = useWorkstation(null);
 
-function handleWorkstationToggle(id: string, type: 'factory' | 'recipe') {
-  if (isInWorkstation(id, type)) {
-    removeItem(id, type);
-  } else {
-    addItem(id, type, targetQuantity.value || 1);
-  }
-}
+
 
 const searchResults = computed(() => {
   const fl = props.filter.toLowerCase();
@@ -265,16 +257,7 @@ const formatChance = (c: number) => {
               {{ f.name }}
             </span>
           </div>
-          <button 
-            @click="handleWorkstationToggle(currentRecipe.id, 'recipe')"
-            class="cursor-pointer border font-cinzel text-[0.65rem] tracking-wider px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5"
-            :class="isInWorkstation(currentRecipe.id, 'recipe') 
-              ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
-              : 'bg-purple/10 border-purple2 text-purple2 hover:bg-purple/30'"
-          >
-            <span>{{ isInWorkstation(currentRecipe.id, 'recipe') ? '✕' : '+' }}</span>
-            {{ isInWorkstation(currentRecipe.id, 'recipe') ? 'Remove' : 'Workstation' }}
-          </button>
+
         </div>
         <div class="text-[0.9rem] text-text2 mb-6 flex gap-3.5 flex-wrap">
           <span><strong class="text-gold">{{ tn(currentRecipe.type) }}</strong></span>

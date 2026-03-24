@@ -2,32 +2,6 @@ import { ref, watch, computed } from 'vue';
 import type { WorkstationItem, AppConfig, Recipe } from '../types';
 import { getStackSize } from './stackSizes';
 
-const STORAGE_KEY = 'eden_workstation_v2';
-
-
-const items = ref<WorkstationItem[]>([]);
-const expandedItems = ref<string[]>([]);
-
-
-const saved = localStorage.getItem(STORAGE_KEY);
-if (saved) {
-  try {
-    const data = JSON.parse(saved);
-    items.value = data.items || [];
-    expandedItems.value = data.expandedItems || [];
-  } catch (e) {
-    console.error('Failed to load workstation:', e);
-  }
-}
-
-
-watch([items, expandedItems], () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    items: items.value,
-    expandedItems: expandedItems.value
-  }));
-}, { deep: true });
-
 export interface BreakdownNode {
   type: string;
   key: string;
@@ -39,64 +13,237 @@ export interface BreakdownNode {
   ingredients: BreakdownNode[] | null;
 }
 
+interface Workstation {
+  id: string;
+  name: string;
+  items: WorkstationItem[];
+  expandedItems: string[];
+}
+
+const STORAGE_KEY = 'eden_workstation_v3';
+const workstations = ref<Workstation[]>([]);
+let activeWorkstationId = ref<string | null>(null);
+
+const saved = localStorage.getItem(STORAGE_KEY);
+if (saved) {
+  try {
+    const data = JSON.parse(saved);
+    workstations.value = data.workstations || [];
+    activeWorkstationId.value = data.activeWorkstationId || null;
+  } catch (e) {
+    console.error('Failed to load workstation:', e);
+  }
+}
+
+if (workstations.value.length === 0) {
+  const id = crypto.randomUUID();
+  workstations.value.push({ id, name: 'My Workstation 1', items: [], expandedItems: [] });
+  activeWorkstationId.value = id;
+}
+
+const activeWorkstation = computed(() =>
+  workstations.value.find(w => w.id === activeWorkstationId.value) || null
+);
+
+watch([workstations, activeWorkstationId], () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    workstations: workstations.value,
+    activeWorkstationId: activeWorkstationId.value
+  }));
+}, { deep: true });
+
 export function useWorkstation(config: AppConfig | null) {
-  function addItem(id: string, type: 'factory' | 'recipe', amount = 1) {
-    const existing = items.value.find(i => i.id === id && i.type === type);
+
+  function parseProductionTime(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'string') {
+    const n = parseFloat(value.replace(/[^\d.]/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function getMatchingOutput(recipe: Recipe, type: string, displayName: string | null) {
+  return (
+    Object.values(recipe.output).find(
+      o => o.type === type && (o.display_name || null) === (displayName || null)
+    ) || null
+  );
+}
+
+function getRunsNeededForNode(node: BreakdownNode): number {
+  const recipe = findRecipeForItem(node.type, node.displayName);
+  if (!recipe) return 0;
+
+  const output = getMatchingOutput(recipe, node.type, node.displayName);
+  if (!output) return 0;
+
+  const stackSize = output.is_compacted ? getStackSize(output.type) : 1;
+  const amountPerRun = output.amount * stackSize * (output.chance || 1);
+
+  if (amountPerRun <= 0) return 0;
+  return Math.ceil(node.amount / amountPerRun);
+}
+
+function getExpandedNodeTime(node: BreakdownNode, path: string[] = []): number {
+  if (!node.can_breakdown || !node.is_expanded || !node.ingredients) return 0;
+  if (path.includes(node.key)) return 0; // cycle guard
+
+  const recipe = findRecipeForItem(node.type, node.displayName);
+  if (!recipe) return 0;
+
+  const runsNeeded = getRunsNeededForNode(node);
+  if (runsNeeded <= 0) return 0;
+
+  let total = parseProductionTime(recipe.production_time) * runsNeeded;
+
+  for (const child of node.ingredients) {
+    total += getExpandedNodeTime(child, [...path, node.key]);
+  }
+
+  return total;
+}
+
+const totalFactoryTime = computed(() => {
+  if (!config || !activeWorkstation.value) return '0 sec';
+
+  let totalSeconds = 0;
+
+  // 1) Always count the direct workstation recipe time
+  for (const item of activeWorkstation.value.items) {
+    if (!item.enabled || item.type !== 'recipe') continue;
+
+    const recipe = config.recipes[item.id];
+    if (!recipe) continue;
+
+    const runs = Math.max(0, item.amount);
+    totalSeconds += parseProductionTime(recipe.production_time) * runs;
+  }
+  const nodes = totalBreakdown.value || [];
+  for (const node of nodes) {
+    totalSeconds += getExpandedNodeTime(node);
+  }
+
+  if (totalSeconds < 60) return `${Math.round(totalSeconds)} sec`;
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.round(totalSeconds % 60);
+  return `${minutes} min ${seconds} sec`;
+});
+
+  function createWorkstation(name = 'New Workstation ') {
+    name += workstations.value.length + 1;
+    let newName = prompt("Name", name);
+    newName = newName?.trim() || name;
+    const id = crypto.randomUUID();
+    workstations.value.push({ id, name: newName, items: [], expandedItems: [] });
+    activeWorkstationId.value = id;
+  }
+
+  function deleteWorkstation(id: string) {
+    workstations.value = workstations.value.filter(w => w.id !== id);
+    if (activeWorkstationId.value === id) activeWorkstationId.value = workstations.value[0]?.id || null;
+  }
+
+  function changeNameWorkstation(id: string) {
+    const w = workstations.value.find(w => w.id === id);
+    if (!w) return;
+    const newName = prompt(`Change name "${w.name}" to`, w.name);
+    if (newName?.trim()) w.name = newName.trim();
+  }
+
+  function switchWorkstation(id: string) { activeWorkstationId.value = id; }
+
+  function addItem(id: string, type: 'factory' | 'recipe', amount = 1, workstationId?: string) {
+    const target = workstationId ? workstations.value.find(w => w.id === workstationId) : activeWorkstation.value;
+    if (!target) return;
+
+    const existing = target.items.find(i => i.id === id && i.type === type);
     if (existing) {
       if (type === 'recipe') existing.amount += amount;
       existing.enabled = true;
     } else {
-      items.value.push({
-        id,
-        type,
-        enabled: true,
-        amount: type === 'factory' ? 1 : amount,
-        timestamp: Date.now()
-      });
+      target.items.push({ id, type, enabled: true, amount: type === 'factory' ? 1 : amount, timestamp: Date.now() });
     }
   }
 
-  function removeItem(id: string, type: 'factory' | 'recipe') {
-    items.value = items.value.filter(i => !(i.id === id && i.type === type));
+  function removeItem(id: string, type: 'factory' | 'recipe', workstationId?: string): void {
+    const target = workstationId
+      ? workstations.value.find(w => w.id === workstationId)
+      : activeWorkstation.value;
+
+    if (!target) return;
+
+    target.items = target.items.filter(
+      i => !(i.id === id && i.type === type)
+    );
   }
 
   function toggleItem(id: string, type: 'factory' | 'recipe') {
-    const item = items.value.find(i => i.id === id && i.type === type);
+    const item = activeWorkstation.value?.items.find(i => i.id === id && i.type === type);
     if (item) item.enabled = !item.enabled;
   }
 
   function updateAmount(id: string, type: 'factory' | 'recipe', amount: number) {
     if (type !== 'recipe') return;
-    const item = items.value.find(i => i.id === id && i.type === type);
+    const item = activeWorkstation.value?.items.find(i => i.id === id && i.type === type);
     if (item) item.amount = Math.max(0, amount);
   }
 
   function toggleExpand(itemKey: string) {
-    if (expandedItems.value.includes(itemKey)) {
-      expandedItems.value = expandedItems.value.filter(t => t !== itemKey);
-    } else {
-      expandedItems.value.push(itemKey);
-    }
+    if (!activeWorkstation.value) return;
+    const expanded = activeWorkstation.value.expandedItems;
+    if (expanded.includes(itemKey)) activeWorkstation.value.expandedItems = expanded.filter(k => k !== itemKey);
+    else expanded.push(itemKey);
   }
 
   function isInWorkstation(id: string, type: 'factory' | 'recipe') {
-    return items.value.some(i => i.id === id && i.type === type);
+    return activeWorkstation.value?.items.some(i => i.id === id && i.type === type) || false;
   }
 
   function clearWorkstation() {
-    items.value = [];
-    expandedItems.value = [];
+    if (!activeWorkstation.value) return;
+    activeWorkstation.value.items = [];
+    activeWorkstation.value.expandedItems = [];
   }
 
+  function addAmount(map: Map<string, any>, type: string, amount: number, display_name: string | null) {
+    const key = `${type}|${display_name || ''}`;
+    const existing = map.get(key);
+    if (existing) existing.amount += amount;
+    else map.set(key, { type, amount, display_name });
+  }
+
+  function isTerminal(type: string): boolean {
+    if (!config) return false;
+    const t = type.toUpperCase();
+    const baseResources = [
+      'INGOT','ORE','RAW_','DIAMOND','REDSTONE','LAPIS','EMERALD','COAL','CHARCOAL','QUARTZ','AMETHYST','NETHERITE','DEBRIS',
+      'COBBLESTONE','STONE'
+    ];
+    return baseResources.some(kw => t.includes(kw));
+  }
+
+  function findRecipeForItem(itemType: string, displayName: string | null): Recipe | null {
+    if (!config) return null;
+    const productionRecipes = Object.values(config.recipes).filter(r => r.type === 'PRODUCTION');
+    for (const recipe of productionRecipes) {
+      const targetOutput = Object.values(recipe.output).find(o => o.type === itemType && (o.display_name || null) === (displayName || null));
+      if (targetOutput) {
+        const inputs = Object.values(recipe.input);
+        if (inputs.some(i => i && i.type === itemType && (i.display_name || null) === (displayName || null))) continue;
+        return recipe;
+      }
+    }
+    return null;
+  }
 
   const totalBreakdown = computed((): BreakdownNode[] | null => {
-    if (!config) return null;
+    if (!config || !activeWorkstation.value) return null;
 
     const directTotals = new Map<string, { type: string; amount: number; display_name: string | null }>();
-
-    for (const item of items.value) {
+    for (const item of activeWorkstation.value.items) {
       if (!item.enabled) continue;
-
       if (item.type === 'factory') {
         const factory = config.factories[item.id];
         if (factory) {
@@ -105,7 +252,7 @@ export function useWorkstation(config: AppConfig | null) {
             addAmount(directTotals, cost.type, baseAmount, cost.display_name);
           }
         }
-      } else {
+      } else if (item.type === 'recipe') {
         const recipe = config.recipes[item.id];
         if (recipe) {
           const multiplier = Math.max(0, item.amount);
@@ -119,57 +266,37 @@ export function useWorkstation(config: AppConfig | null) {
 
     function buildNode(type: string, amount: number, displayName: string | null, path: string[] = []): BreakdownNode {
       const key = `${type}|${displayName || ''}`;
-      const recipe = findRecipeForItem(type, displayName, config!);
-      const canBreakdown = !isTerminal(type, displayName) && !!recipe;
-      const isExpanded = expandedItems.value.includes(key);
-      
+      const recipe = findRecipeForItem(type, displayName);
+      const canBreakdown = !isTerminal(type) && !!recipe;
+      const isExpanded = activeWorkstation.value!.expandedItems.includes(key);
+
       const factoryNames: string[] = [];
-      if (canBreakdown) {
-        const producingRecipes = Object.values(config!.recipes).filter(r => {
-          const outputs = Object.values(r.output);
-          return outputs.some(o => o.type === type && (o.display_name || null) === (displayName || null));
-        });
-        
-        const recipeIds = producingRecipes.map(r => r.id);
-        const factories = Object.values(config!.factories).filter(f => 
-          f.recipes.some(rid => recipeIds.includes(rid))
+      if (canBreakdown && recipe) {
+        const producingRecipes = Object.values(config!.recipes).filter(r =>
+          Object.values(r.output).some(o => o.type === type && (o.display_name || null) === (displayName || null))
         );
-        
+        const recipeIds = producingRecipes.map(r => r.id);
+        const factories = Object.values(config!.factories).filter(f => f.recipes.some(rid => recipeIds.includes(rid)));
         factoryNames.push(...Array.from(new Set(factories.map(f => f.name))));
       }
 
-      if (isExpanded && !path.includes(key)) {
-        if (recipe) {
-          const outputs = Object.values(recipe.output);
-          const targetOutput = outputs.find(o => 
-            o.type === type && (o.display_name || null) === (displayName || null)
-          );
-          
-          if (targetOutput) {
-            const stackSize = targetOutput.is_compacted ? getStackSize(targetOutput.type) : 1;
-            const amountPerRun = targetOutput.amount * stackSize * (targetOutput.chance || 1);
-            const runsNeeded = Math.ceil(amount / amountPerRun);
-
-            const ingredients = Object.values(recipe.input)
-              .filter(input => {
-                const inputKey = `${input.type}|${input.display_name || ''}`;
-                return !path.includes(inputKey) && inputKey !== key;
-              })
-              .map(input => {
-                const inputBaseAmount = input.amount * (input.is_compacted ? getStackSize(input.type) : 1);
-                return buildNode(input.type, inputBaseAmount * runsNeeded, input.display_name, [...path, key]);
-              });
-
-            return {
-              type, key, displayName, amount, can_breakdown: true, is_expanded: true, ingredients, factoryNames
-            };
-          }
+      if (isExpanded && !path.includes(key) && recipe) {
+        const targetOutput = Object.values(recipe.output).find(o => o.type === type && (o.display_name || null) === (displayName || null));
+        if (targetOutput) {
+          const stackSize = targetOutput.is_compacted ? getStackSize(targetOutput.type) : 1;
+          const amountPerRun = targetOutput.amount * stackSize * (targetOutput.chance || 1);
+          const runsNeeded = Math.ceil(amount / amountPerRun);
+          const ingredients = Object.values(recipe.input)
+            .filter(input => !path.includes(`${input.type}|${input.display_name || ''}`))
+            .map(input => {
+              const inputBaseAmount = input.amount * (input.is_compacted ? getStackSize(input.type) : 1);
+              return buildNode(input.type, inputBaseAmount * runsNeeded, input.display_name, [...path, key]);
+            });
+          return { type, key, displayName, amount, can_breakdown: true, is_expanded: true, ingredients, factoryNames };
         }
       }
 
-      return {
-        type, key, displayName, amount, can_breakdown: canBreakdown, is_expanded: isExpanded, ingredients: null, factoryNames
-      };
+      return { type, key, displayName, amount, can_breakdown: canBreakdown, is_expanded: isExpanded, ingredients: null, factoryNames };
     }
 
     return Array.from(directTotals.values())
@@ -177,65 +304,14 @@ export function useWorkstation(config: AppConfig | null) {
       .sort((a, b) => b.amount - a.amount);
   });
 
-  function addAmount(map: Map<string, any>, type: string, amount: number, display_name: string | null) {
-    const key = `${type}|${display_name || ''}`;
-    const existing = map.get(key);
-    if (existing) {
-      existing.amount += amount;
-    } else {
-      map.set(key, { type, amount, display_name });
-    }
-  }
-function isTerminal(type: string, displayName: string | null): boolean {
-  const t = type.toUpperCase();
-
-  if (t.includes('BUCKET') || t.includes('BOTTLE')) return true;
-
-  if (displayName) {
-    const name = displayName.toUpperCase();
-    if (name.includes('FOSSIL')) return true;
-    if (name.includes('GRAVEL')) return true;
-    if (name.includes('BUCKET')) return true;
-    if (name.includes('BOTTLE')) return true;
-    if (name.includes('COBBLESTONE')) return true;
-    if (name.includes('STONE')) return true;
-  }
-
-
-  const baseResources = [
-    'INGOT', 'ORE', 'RAW_', 'DIAMOND', 'REDSTONE', 'LAPIS', 'EMERALD', 
-    'COAL', 'CHARCOAL', 'QUARTZ', 'AMETHYST', 'NETHERITE', 'DEBRIS',
-    'COBBLESTONE', 'STONE'
-  ];
-  if (baseResources.some(kw => t.includes(kw))) return true;
-
-  if (t === 'GRAVEL' || t.includes('FOSSIL')) return true;
-
-
-  if (config) {
-    const isLoopItem = Object.values(config.recipes).some(r => {
-      const hasInput = Object.values(r.input).some(i => i.type === type && (i.display_name || null) === (displayName || null));
-      const hasOutput = Object.values(r.output).some(o => o.type === type && (o.display_name || null) === (displayName || null));
-      return hasInput && hasOutput;
-    });
-    if (isLoopItem) return true;
-  }
-
-  const plantKeywords = [
-      'SAPLING', 'LEAVES', 'SEEDS', 'FLOWER', 'WHEAT', 'CARROT', 'POTATO', 
-      'BEETROOT', 'SUGAR_CANE', 'BAMBOO', 'CACTUS', 'MUSHROOM', 'FUNGUS', 
-      'WARPED', 'CRIMSON', 'GRASS', 'FERN', 'VINE', 'LILY_PAD', 'BERRY', 
-      'BERRIES', 'KELP', 'SEAGRASS', 'PICKLE', 'SPORE', 'ROOTS', 'AZALEA',
-      'MOSS', 'DRIPLEAF', 'GLOW_LICHEN', 'VINES', 'PUMPKIN', 'MELON', 'NETHER_WART'
-    ];
-    if (plantKeywords.some(kw => t.includes(kw))) return true;
-
-    return false;
-  }
-
   return {
-    items,
-    expandedItems,
+    workstations,
+    activeWorkstation,
+    activeWorkstationId,
+    createWorkstation,
+    deleteWorkstation,
+    switchWorkstation,
+    changeNameWorkstation,
     addItem,
     removeItem,
     toggleItem,
@@ -243,26 +319,7 @@ function isTerminal(type: string, displayName: string | null): boolean {
     toggleExpand,
     isInWorkstation,
     clearWorkstation,
-    totalBreakdown
+    totalBreakdown,
+    totalFactoryTime
   };
-}
-
-function findRecipeForItem(itemType: string, displayName: string | null, config: AppConfig): Recipe | null {
-  const productionRecipes = Object.values(config.recipes).filter(r => r.type === 'PRODUCTION');
-  
-  for (const recipe of productionRecipes) {
-    const outputs = Object.values(recipe.output);
-    const targetOutput = outputs.find(o => 
-      o.type === itemType && (o.display_name || null) === (displayName || null)
-    );
-    
-    if (targetOutput) {
-      const inputs = Object.values(recipe.input);
-      if (inputs.some(i => i && i.type === itemType && (i.display_name || null) === (displayName || null))) continue;
-      if (inputs.length === 1 && inputs[0] && inputs[0].type === itemType && inputs[0].is_compacted && !targetOutput.is_compacted) continue;
-      
-      return recipe;
-    }
-  }
-  return null;
 }
