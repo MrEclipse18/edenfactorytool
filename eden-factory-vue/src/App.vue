@@ -161,15 +161,15 @@ const reloadPage = () => {
           <div class="ml-4 mb-4">
 
         <time class="block mb-1 text-sm text-gray-500">
-        March 21, 2026
+        March 25, 2026
       </time>
 
       <h3 class="text-lg font-semibold">
-        1.1 Released
+        1.2 Released
       </h3>
 
       <p class="text-gray-600">
-        Added pinning to the recipe page, Added workstation page, testing out a new font, fixed 30+ images, added lore and enchants to item chips, made the overall experience nicer
+        Overhaul of workstations: Multiple Workstations, Importing and Exporting, Renaming, Total Time, UI Overhaul, Templates, Multiple Bug Fixes
       </p>
 
       
@@ -185,7 +185,6 @@ const reloadPage = () => {
       </div>
     </div>
 </div>
-
 
     <header class="bg-linear-to-b from-[rgba(8,7,18,0.40)] to-[rgba(12,11,20,0.75)] border-b border-border2 p-[20px_28px_16px] sticky top-0 z-[49] backdrop-blur-md shadow-[0_2px_32px_rgba(109,40,217,0.18)]">
       <div class="TopBar max-w-[1440px] mx-auto flex items-center gap-5 flex-wrap">
