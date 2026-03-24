@@ -18,17 +18,31 @@ const globalSearch = ref('');
 const recipeSearch = ref('All');
 const selectedFactoryId = ref<string | null>(null);
 
-const { addItem, removeItem, isInWorkstation } = useWorkstation(null);
+const { addItem, removeItem, isInWorkstation: isInWorkstationRaw, workstations  } = useWorkstation(null);
 
-function handleWorkstationToggle(id: string, type: 'factory' | 'recipe') {
-  if (isInWorkstation(id, type)) {
-    removeItem(id, type);
+const showWorkstationDropdown = ref(false);
+
+function handleWorkstationToggle(workstationId: string, id: string, type: 'factory' | 'recipe') {
+  if (isInWorkstation(id, type, workstationId)) {
+    removeItem(id, type, workstationId);
   } else {
-    addItem(id, type);
+    addItem(id, type, 1, workstationId);
   }
 }
 
-
+function isInWorkstation(id: string, type: 'factory' | 'recipe', workstationId?: string) {
+  if (!workstationId) {
+    // Check all workstations if no specific one is passed
+    return workstations.value.some(w =>
+      w.items.some(i => i.id === id && i.type === type)
+    );
+  } else {
+    // Check only the specified workstation
+    const ws = workstations.value.find(w => w.id === workstationId);
+    if (!ws) return false;
+    return ws.items.some(i => i.id === id && i.type === type);
+  }
+}
 import { provide } from 'vue';
 
 provide('setGlobalSearch', (val: string) => {
@@ -124,13 +138,11 @@ const reloadPage = () => {
 };
 
 
-function handleAddToWorkstation() {
-  handleWorkstationToggle(selectedFactory.value!.id, 'factory');
-}
+
 </script>
 
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen tracking-wide">
   <div v-if="InfoBox" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
     <div id ="info-box"ref="infoBoxRef"class="bg-bg3 border border-border2 rounded-xl p-4 max-w-[600px] relative">
   <button class="absolute top-[5px] right-[9px] cursor-pointer" @click.self="InfoBox = false" @click="InfoBox = false">X</button>
@@ -272,17 +284,81 @@ function handleAddToWorkstation() {
                 <div class="text-text3 italic mt-1 text-[0.95rem]">Factory ID: {{ selectedFactory.id }}</div>
               </div>
               <div class="flex gap-2">
-                <button
-  id="AddToWorkStation"
-  @click="handleAddToWorkstation"
-  class="cursor-pointer border font-cinzel text-[0.7rem] tracking-wider px-4 py-2 rounded-lg transition-all flex items-center gap-2"
-  :class="isInWorkstation(selectedFactory.id, 'factory') 
-    ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
-    : 'bg-gold/10 border-gold/30 text-gold hover:bg-gold/20'"
->
-  <span>{{ isInWorkstation(selectedFactory.id, 'factory') ? '✕' : '+' }}</span>
-  {{ isInWorkstation(selectedFactory.id, 'factory') ? 'Remove from Workstation' : 'Add to Workstation' }}
-</button>
+<div class="relative">
+  <!-- Button -->
+  <button
+    id="AddToWorkStation"
+    @mouseenter="showWorkstationDropdown = true"
+    @mouseleave="showWorkstationDropdown = false"
+    class="cursor-pointer border font-cinzel text-[0.7rem] tracking-wider px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+    :class="isInWorkstation(selectedFactory.id, 'factory') 
+      ? 'bg-red/10 border-red/30 text-red hover:bg-red/20' 
+      : 'bg-gold/10 border-gold/30 text-gold hover:bg-gold/20'"
+  >
+    <span>{{ isInWorkstation(selectedFactory.id, 'factory') ? '✕' : '+' }}</span>
+    {{ isInWorkstation(selectedFactory.id, 'factory') ? 'Remove from Workstation' : 'Add to Workstation' }}
+    <svg
+      class="inline-block w-3 h-3 ml-1 transition-transform duration-200"
+      :class="{ 'rotate-180': showWorkstationDropdown }"
+      fill="currentColor"
+      viewBox="0 0 20 20"
+    >
+      <path d="M5.23 7.21a.75.75 0 011.06.02L10 11.292l3.71-4.06a.75.75 0 111.08 1.04l-4.25 4.65a.75.75 0 01-1.08 0l-4.25-4.65a.75.75 0 01.02-1.06z" />
+    </svg>
+  </button>
+
+  <transition name="fade">
+    <div
+      v-show="showWorkstationDropdown"
+      class="absolute left-0 mt-2 w-64 overflow-hidden rounded-2xl border border-border/80 bg-bg2 shadow-2xl ring-1 ring-black/5 z-50"
+      @mouseenter="showWorkstationDropdown = true"
+      @mouseleave="showWorkstationDropdown = false"
+    >
+      <div class="px-4 py-3 border-b border-border/70 bg-bg1/60">
+        <p class="text-xs font-semibold uppercase tracking-[0.15em] text-text/60">
+          Factories
+        </p>
+        <p class="mt-1 text-[11px] text-text/45">
+          Click to add or remove this factory
+        </p>
+      </div>
+
+      <div class="max-h-64 overflow-y-auto p-2">
+        <button
+          v-for="w in workstations"
+          :key="w.id"
+          @click="handleWorkstationToggle(w.id, selectedFactory.id, 'factory')"
+          class="group w-full flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl border transition-all duration-150 ease-out text-left"
+          :class="isInWorkstation(selectedFactory.id, 'factory', w.id)
+            ? 'bg-primary/12 border-primary/35 text-primary shadow-sm'
+            : 'bg-bg1/40 border-transparent text-text/80 hover:bg-bg3 hover:border-border/70 hover:text-text'"
+        >
+          <span
+            class="shrink-0 grid place-items-center w-8 h-8 rounded-lg font-semibold text-sm transition-colors"
+            :class="isInWorkstation(selectedFactory.id, 'factory', w.id)
+              ? 'bg-primary text-white'
+              : 'bg-bg3 text-text/55 group-hover:bg-bg4 group-hover:text-text/75'"
+          >
+            {{ isInWorkstation(selectedFactory.id, 'factory', w.id) ? '✓' : '+' }}
+          </span>
+
+          <span class="min-w-0 flex-1 truncate text-sm font-medium">
+            {{ w.name }}
+          </span>
+
+          <span
+            class="shrink-0 text-[11px] font-medium px-2 py-1 rounded-full transition-colors"
+            :class="isInWorkstation(selectedFactory.id, 'factory', w.id)
+              ? 'bg-primary/15 text-primary'
+              : 'bg-bg3 text-text/45 group-hover:bg-bg4 group-hover:text-text/60'"
+          >
+            {{ isInWorkstation(selectedFactory.id, 'factory', w.id) ? 'Added' : 'Add' }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </transition>
+</div>
                 <button
                   class="bg-bg4 border border-border2 text-text2 text-[1.2rem] w-[38px] h-[38px] rounded-lg cursor-pointer flex items-center justify-center transition-all hover:border-purple2 hover:text-purple2 hover:shadow-[0_0_8px_var(--glow)]"
                   @click="closeFactoryDetail"
@@ -345,12 +421,7 @@ function handleAddToWorkstation() {
         {{ config.recipes[rid].production_time ? ' · ' + fmt(config.recipes[rid].production_time) : '' }}
       </div>
     </div>
-    <button 
-      @click.stop="handleWorkstationToggle(rid, 'recipe')"
-      class="cursor-pointer opacity-0 group-hover:opacity-100 bg-purple/10 border border-purple/30 text-purple2 font-cinzel text-[0.6rem] px-2 py-1 rounded transition-all hover:bg-purple/20 flex-shrink-0"
-    >
-      {{ isInWorkstation(rid, 'recipe') ? '✕' : '+ Workstation' }}
-    </button>
+
   </div>
 </template>
                 <div v-else class="opacity-40 text-white">{{ rid }}</div>

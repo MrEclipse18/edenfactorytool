@@ -22,7 +22,6 @@ onMounted(async () => {
     console.warn('Failed to load optional tags in FactoryGrid:', e);
   }
 });
-// <-- define reactive state for the dropdown
 const filterOptions = ref<'A-Z' | 'Z-A' | 'Citadel Hardness' | 'Recipe Count' | 'Unique Items' | 'Unique Items L-H'>('A-Z');
 
 const filteredFactories = computed(() => {
