@@ -5,6 +5,7 @@ import { useWorkstation } from '../utils/workstation';
 import { getWikiUrl } from '../utils/wikiIcons';
 import { getStackSize } from '../utils/stackSizes';
 import BreakdownTree from './BreakdownTree.vue';
+import { watch } from 'vue'
 
 const props = defineProps<{
   config: AppConfig;
@@ -18,11 +19,9 @@ const {
   removeItem,
   toggleItem,
   switchWorkstation,
-  createWorkstation,
   updateAmount,
   toggleExpand,
   clearWorkstation,
-  changeNameWorkstation,
   totalFactoryTime,
   totalBreakdown,
 } = useWorkstation(props.config);
@@ -148,10 +147,268 @@ function handleFileUpload(event: Event) {
 
   reader.readAsText(file);
 }
+let creatingWorkStation = ref(false);
+const showEditor = ref(false);
+const editingWorkstationId = ref<string | null>(null);
+const editorName = ref('');
+const selectedTemplate = ref('none');
+function openEditor(id: string | null = null, name: string = '') {
+  if (id == null) {
+    creatingWorkStation.value = true;
+    selectedTemplate.value = 'none'; 
+  } else {
+    creatingWorkStation.value = false;
+  }
+
+  editingWorkstationId.value = id;
+  editorName.value = name;
+  showEditor.value = true;
+}
+function closeEditor() {
+  showEditor.value = false;
+  editingWorkstationId.value = null;
+}
+const workstationTemplates: Record<string, () => any> = {
+  Bronze: () => ({
+    id: crypto.randomUUID(),
+    name: "Test Bronze",
+    items: [
+      { id: "bronze_forge", type: "factory", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "forge_bronze_pickaxes", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "forge_bronze_shovels", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "forge_bronze_axes", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "forge_bronze_swords", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "forge_bronze_helmets", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "forge_bronze_boots", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "forge_bronze_leggings", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "forge_bronze_chestplates", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+    ],
+    expandedItems: [
+      "NETHER_STAR|Steel Ingot",
+      "CLAY|"
+    ],
+  }),
+
+  Steel: () => ({
+    id: crypto.randomUUID(),
+    name: "Test Steel",
+    items: [
+      { id: "steel_anvil", type: "factory", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_steel_helm", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_steel_chest", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_steel_legs", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_steel_boots", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_steel_pick", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_steel_axe", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_steel_sword", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_steel_shovel", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+    ],
+    expandedItems: [
+      "NETHER_STAR|Steel Ingot",
+      "CLAY|"
+    ],
+  }),
+
+  Mithril: () => ({
+    id: crypto.randomUUID(),
+    name: "Mithril Factories",
+    items: [
+      { id: "mithril_armor_factory", type: "factory", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "mithril_tool_factory", type: "factory", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_diamond_helm", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_diamond_chest", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_diamond_legs", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+      { id: "make_diamond_boots", type: "recipe", enabled: true, amount: 1, timestamp: Date.now() },
+    ],
+    expandedItems: [
+      "PRISMARINE_SHARD|Mithril Sheet",
+      "STRING|Mithril Thread",
+      "SLIME_BALL|",
+      "BLAZE_POWDER|"
+    ],
+  }),
+};
+function saveEditor() {
+  const name = editorName.value.trim();
+  if (!name) return;
+
+  if (creatingWorkStation.value) {
+    let newWorkstation;
+
+    if (
+      selectedTemplate.value !== 'none' &&
+      workstationTemplates[selectedTemplate.value]
+    ) {
+      newWorkstation = workstationTemplates[selectedTemplate.value]!();
+      newWorkstation.name = name;
+    } else {
+      newWorkstation = {
+        id: crypto.randomUUID(),
+        name,
+        items: [],
+        expandedItems: [],
+      };
+    }
+
+    workstations.value.push(newWorkstation);
+    activeWorkstationId.value = newWorkstation.id;
+
+  } else {
+    const workstation = workstations.value.find(
+      w => w.id === editingWorkstationId.value
+    );
+
+    if (workstation) {
+      workstation.name = name;
+    }
+  }
+
+  closeEditor();
+}
+
+watch(showEditor, (val) => {
+  if (val) {
+    document.body.classList.add('overflow-hidden')
+  } else {
+    document.body.classList.remove('overflow-hidden')
+  }
+})
 </script>
 
 <template>
+
   <div class="relative min-h-[calc(100vh-120px)] pb-10">
+    
+<Teleport to="body">
+  <div
+    v-if="showEditor"
+    class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+  >
+    <div
+      class="w-80 overflow-hidden rounded-2xl border border-border/60 bg-bg2 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_55px_rgba(0,0,0,0.5)]"
+      @click.stop
+    >
+      <div class="px-5 py-4 border-b border-border/60 bg-bg1/70">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-text/50">
+          Workstation Editor
+        </p>
+        <p class="mt-1 text-xs text-text/40">
+          Create or edit your workstation
+        </p>
+      </div>
+
+      <div class="px-5 py-4 space-y-2">
+        <h1 class="text-sm font-semibold text-text/70">Name</h1>
+        <input
+          v-model="editorName"
+          placeholder="Enter workstation name..."
+          class="w-full rounded-xl border border-border/60 bg-bg3/80 px-3 py-2 outline-none transition duration-200
+                 cursor-text hover:border-border hover:bg-bg3
+                 focus:border-purple2 focus:ring-2 focus:ring-purple2/30"
+        />
+      </div>
+
+      <div
+        v-show="creatingWorkStation"
+        class="border-t border-border/50 px-5 py-4 space-y-3"
+      >
+        <h1 class="text-sm font-semibold text-text/70">Starter Templates</h1>
+
+        <div class="flex flex-wrap gap-2">
+          <label class="cursor-pointer">
+            <input
+              type="radio"
+              v-model="selectedTemplate"
+              name="selection"
+              value="none"
+              class="peer sr-only"
+            />
+            <div
+              class="nav-btn inline-flex items-center justify-center rounded-xl border border-border/60 px-4 py-2 text-text/60 transition duration-200
+                     cursor-pointer hover:-translate-y-0.5 hover:border-purple2 hover:bg-purple2/10 hover:text-purple2 hover:shadow-sm
+                     peer-checked:border-purple2 peer-checked:bg-purple2/10 peer-checked:text-purple2"
+            >
+              None
+            </div>
+          </label>
+
+          <label class="cursor-pointer">
+            <input
+              type="radio"
+              v-model="selectedTemplate"
+              name="selection"
+              value="Bronze"
+              class="peer sr-only"
+            />
+            <div
+              class="nav-btn inline-flex items-center justify-center rounded-xl border border-border/60 px-4 py-2 text-text/60 transition duration-200
+                     cursor-pointer hover:-translate-y-0.5 hover:border-purple2 hover:bg-purple2/10 hover:text-purple2 hover:shadow-sm
+                     peer-checked:border-purple2 peer-checked:bg-purple2/10 peer-checked:text-purple2"
+            >
+              Bronze Set
+            </div>
+          </label>
+
+          <label class="cursor-pointer">
+            <input
+              type="radio"
+              v-model="selectedTemplate"
+              name="selection"
+              value="Steel"
+              class="peer sr-only"
+            />
+            <div
+              class="nav-btn inline-flex items-center justify-center rounded-xl border border-border/60 px-4 py-2 text-text/60 transition duration-200
+                     cursor-pointer hover:-translate-y-0.5 hover:border-purple2 hover:bg-purple2/10 hover:text-purple2 hover:shadow-sm
+                     peer-checked:border-purple2 peer-checked:bg-purple2/10 peer-checked:text-purple2"
+            >
+              Steel Set
+            </div>
+          </label>
+
+          <label class="cursor-pointer">
+            <input
+              type="radio"
+              v-model="selectedTemplate"
+              name="selection"
+              value="Mithril"
+              class="peer sr-only"
+            />
+            <div
+              class="nav-btn inline-flex items-center justify-center rounded-xl border border-border/60 px-4 py-2 text-text/60 transition duration-200
+                     cursor-pointer hover:-translate-y-0.5 hover:border-purple2 hover:bg-purple2/10 hover:text-purple2 hover:shadow-sm
+                     peer-checked:border-purple2 peer-checked:bg-purple2/10 peer-checked:text-purple2"
+            >
+              Mithril Set
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-3 border-t border-border/60 px-5 py-4">
+        <button
+          @click="saveEditor"
+          class="flex-1 rounded-xl border border-bg2 bg-bg4 py-2 font-medium text-white
+                 cursor-pointer transition duration-200
+                 hover:-translate-y-0.5 hover:border-purple2 hover:bg-purple2 hover:shadow-md
+                 active:translate-y-0 active:scale-[0.98]"
+        >
+          Save
+        </button>
+
+        <button
+          @click="closeEditor"
+          class="flex-1 rounded-xl border border-border/60 bg-bg3 py-2 text-text3
+                 cursor-pointer transition duration-200
+                 hover:-translate-y-0.5 hover:border-border hover:bg-bg4 hover:text-text
+                 active:translate-y-0 active:scale-[0.98]"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</Teleport>
     <div class="mb-6 rounded-2xl border border-border2 bg-bg2/80 p-4 shadow-lg shadow-black/10 backdrop-blur-sm">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div class="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
@@ -177,7 +434,7 @@ function handleFileUpload(event: Event) {
                 <button
                   v-if="hoveredId === w.id"
                   type="button"
-                  @click.stop="changeNameWorkstation(w.id)"
+                  @click.stop="openEditor(w.id, w.name)"
                   class="rounded-full p-2 text-text3 transition hover:bg-white/10 hover:text-white"
                   aria-label="Rename workstation"
                   title="Rename"
@@ -202,7 +459,7 @@ function handleFileUpload(event: Event) {
 <div class="flex items-center justify-end gap-3">
   <button
     type="button"
-    @click="createWorkstation()"
+    @click="openEditor()"
     class="nav-btn flex h-12 w-12 items-center justify-center rounded-full border border-border2 bg-bg3 text-text3 text-2xl font-bold shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-black/20"
     title="New Workstation"
     aria-label="New Workstation"
@@ -397,3 +654,4 @@ function handleFileUpload(event: Event) {
   filter: brightness(0) invert(1);
 }
 </style>
+
