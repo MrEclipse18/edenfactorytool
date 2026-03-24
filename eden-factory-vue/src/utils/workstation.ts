@@ -214,7 +214,7 @@ const totalFactoryTime = computed(() => {
     else map.set(key, { type, amount, display_name });
   }
 
-  function isTerminal(type: string, displayName: string | null): boolean {
+  function isTerminal(type: string): boolean {
     if (!config) return false;
     const t = type.toUpperCase();
     const baseResources = [
@@ -267,7 +267,7 @@ const totalFactoryTime = computed(() => {
     function buildNode(type: string, amount: number, displayName: string | null, path: string[] = []): BreakdownNode {
       const key = `${type}|${displayName || ''}`;
       const recipe = findRecipeForItem(type, displayName);
-      const canBreakdown = !isTerminal(type, displayName) && !!recipe;
+      const canBreakdown = !isTerminal(type) && !!recipe;
       const isExpanded = activeWorkstation.value!.expandedItems.includes(key);
 
       const factoryNames: string[] = [];

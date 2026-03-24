@@ -88,7 +88,6 @@ function downloadFile() {
   URL.revokeObjectURL(url);
 }
 
-const fileContent = ref<string>('');
 
 function handleFileUpload(event: Event) {
   const input = event.target as HTMLInputElement;

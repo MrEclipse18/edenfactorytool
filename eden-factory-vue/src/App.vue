@@ -18,7 +18,7 @@ const globalSearch = ref('');
 const recipeSearch = ref('All');
 const selectedFactoryId = ref<string | null>(null);
 
-const { addItem, removeItem, isInWorkstation: isInWorkstationRaw, workstations  } = useWorkstation(null);
+const { addItem, removeItem, workstations  } = useWorkstation(null);
 
 const showWorkstationDropdown = ref(false);
 

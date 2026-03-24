@@ -5,7 +5,6 @@ import { getWikiUrl } from '../utils/wikiIcons';
 import { useWorkstation } from '../utils/workstation';
 import ItemChip from './ItemChip.vue';
 
-const workstationBtnRef = ref<HTMLElement | null>(null);
 
   const props = defineProps<{
   config: AppConfig;
@@ -17,26 +16,10 @@ const workstationBtnRef = ref<HTMLElement | null>(null);
 const { 
   activeWorkstation,
   workstations,
-  activeWorkstationId,
-  deleteWorkstation,
   removeItem, 
-  toggleItem, 
-  switchWorkstation,
-  createWorkstation,
-  updateAmount, 
-  toggleExpand,
-  clearWorkstation, 
-  changeNameWorkstation,
-  totalBreakdown 
+
 } = useWorkstation(props.config);
 
-function flashWorkstationButton() { 
-  if (!workstationBtnRef.value) return;
-  workstationBtnRef.value.classList.add('animate-pulse');
-  setTimeout(() => {
-    workstationBtnRef.value?.classList.remove('animate-pulse');
-  }, 1700);
-}
 
 
 const emit = defineEmits<{
