@@ -139,6 +139,65 @@ const reloadPage = () => {
 
 
 
+let chaosInterval: number | null = null;
+
+onMounted(() => {
+  const today = new Date();
+
+  if (today.getMonth() === 3 && today.getDate() === 1) {
+    document.body.classList.add("april-fools");
+
+    const fonts = [
+  "'Comic Sans MS', cursive",
+  "'Papyrus', fantasy",
+  "'Impact', sans-serif",
+  "'Courier New', monospace",
+  "'Times New Roman', serif",
+  "'Arial Black', sans-serif",
+  "'Trebuchet MS', sans-serif",
+
+  "Arial, sans-serif",
+  "Helvetica, sans-serif",
+  "Verdana, sans-serif",
+  "Georgia, serif",
+  "Tahoma, sans-serif",
+  "Lucida Console, monospace",
+  "Lucida Sans Unicode, sans-serif",
+  "Garamond, serif",
+  "Palatino Linotype, serif",
+  "Book Antiqua, serif",
+  "Calibri, sans-serif",
+  "Cambria, serif",
+  "Segoe UI, sans-serif",
+  "System-ui, sans-serif",
+  "Roboto, sans-serif",
+  "Oxygen, sans-serif",
+  "Ubuntu, sans-serif",
+  "Fira Sans, sans-serif",
+  "Noto Sans, sans-serif",
+  "Noto Serif, serif",
+];
+
+    function applyChaos() {
+      const elements = document.querySelectorAll("h1, h2, h3, p, span, button, div");
+
+      elements.forEach((el) => {
+        if (Math.random() < 0.4) {
+          const randomFont =
+  fonts[Math.floor(Math.random() * fonts.length)] || "sans-serif";
+(el as HTMLElement).style.setProperty("font-family", randomFont, "important");        }
+      });
+    }
+
+    applyChaos();
+    chaosInterval = setInterval(applyChaos, 1000);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (chaosInterval) clearInterval(chaosInterval);
+});
+
 </script>
 
 <template>
